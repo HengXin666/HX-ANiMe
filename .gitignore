@@ -3,5 +3,6 @@
 # === Java End ===
 
 # === Vue Begin ===
+node_modules
 # 已配置到子文件夹
 # === Vue End ===
