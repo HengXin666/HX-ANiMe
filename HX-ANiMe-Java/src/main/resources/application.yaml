@@ -1,0 +1,15 @@
+# 定义端口
+server:
+  port:
+    28205
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/hx_anime?useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
