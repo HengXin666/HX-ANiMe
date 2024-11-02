@@ -1,35 +1,42 @@
 <template>
 	<el-container>
 		<el-header class="head">
-			<el-menu :default-active="activeIndex" class="el-menu-left" mode="horizontal" :ellipsis="false"
+			<el-menu :default-active="activeIndex" class="el-menu" mode="horizontal" :ellipsis="false"
 				@select="handleSelect">
 				<el-menu-item index="0">
-					<img width="100" src="@/views/img/logo/HX-ANiMe.png" alt="Logo"></img>
+					<router-link to="/info">
+						<img width="100" src="@/views/img/logo/HX-ANiMe.png" alt="Logo" />
+					</router-link>
 				</el-menu-item>
 				<el-menu-item index="1">
-					Home
+					<router-link to="/dashboard">Home</router-link>
+				</el-menu-item>
+				<el-menu-item index="2">
+					<router-link to="/force-graph">番剧可视化</router-link>
 				</el-menu-item>
 			</el-menu>
 
-			<el-row :gutter="60">
-				<el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1">
-					<el-switch v-model="isDark" @change="toggleDark" size="large">
-						<template #active-action>
-							<el-icon>
-								<Moon color="{{ changeTheme }}" />
-							</el-icon>
-						</template>
-						<template #inactive-action>
-							<el-icon>
-								<Sunny color="{{ changeTheme }}" />
-							</el-icon>
-						</template>
-					</el-switch>
-				</el-col>
-				<el-col :xs="4" :sm="6" :md="8" :lg="9" :xl="11">
-					<el-avatar src="https://null.com"> user </el-avatar>
-				</el-col>
-			</el-row>
+			<div class="row-wrapper">
+				<el-row :gutter="60">
+					<el-col :span="6">
+						<el-switch v-model="isDark" @change="toggleDark" size="large">
+							<template #active-action>
+								<el-icon>
+									<Moon color="{{ changeTheme }}" />
+								</el-icon>
+							</template>
+							<template #inactive-action>
+								<el-icon>
+									<Sunny color="{{ changeTheme }}" />
+								</el-icon>
+							</template>
+						</el-switch>
+					</el-col>
+					<el-col :span="6">
+						<el-avatar src="https://null.com"> user </el-avatar>
+					</el-col>
+				</el-row>
+			</div>
 		</el-header>
 
 		<!-- 内容区域 -->
@@ -98,7 +105,7 @@ const changeThemeColor = (color: string) => {
 	margin-right: 0;
 }
 
-.el-menu--horizontal > .el-menu-item.is-active {
+.el-menu--horizontal>.el-menu-item.is-active {
 	.el-menu-right {
 		border-bottom: 0px solid var(--el-menu-active-color);
 		color: var(--el-menu-active-color) !important;
@@ -106,6 +113,9 @@ const changeThemeColor = (color: string) => {
 }
 
 .head {
+	margin: 0;
+	padding: 0;
+	width: 100%;
 	display: flex;
 	justify-content: space-between;
 	/* 分散对齐 */
@@ -115,5 +125,24 @@ const changeThemeColor = (color: string) => {
 
 	/* 设置边框 */
 	border-bottom: 1px solid var(--el-border-color);
+	background-color: #282828;
+
+	.el-menu {
+		background-color: #282828;
+	}
+
+	.row-wrapper {
+		overflow-x: hidden;
+	}
+
+	/* 去掉router-link的下划线 */
+	a {
+		text-decoration: none;
+	}
+
+	.router-link-active {
+		text-decoration: none;
+	}
+
 }
 </style>
