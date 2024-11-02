@@ -1,13 +1,8 @@
 <template>
 	<el-container>
 		<el-header class="head">
-			<el-menu 
-				:default-active="activeIndex" 
-				class="el-menu-head" 
-				mode="horizontal" 
-				:ellipsis="false" 
-				@select="handleSelect"
-			>
+			<el-menu :default-active="activeIndex" class="el-menu-left" mode="horizontal" :ellipsis="false"
+				@select="handleSelect">
 				<el-menu-item index="0">
 					<img width="100" src="@/views/img/logo/HX-ANiMe.png" alt="Logo"></img>
 				</el-menu-item>
@@ -16,18 +11,27 @@
 				</el-menu-item>
 			</el-menu>
 
-			<div class="switch-dark">
-				<el-switch v-model="isDark" @change="toggleDark" size="large">
-					<template #active-action>
-						<el-icon><Moon color="{{ changeTheme }}"/></el-icon>
-					</template>
-					<template #inactive-action>
-						<el-icon><Sunny color="{{ changeTheme }}"/></el-icon>
-					</template>
-				</el-switch>
-			</div>
+			<el-row :gutter="60">
+				<el-col :xs="8" :sm="6" :md="4" :lg="3" :xl="1">
+					<el-switch v-model="isDark" @change="toggleDark" size="large">
+						<template #active-action>
+							<el-icon>
+								<Moon color="{{ changeTheme }}" />
+							</el-icon>
+						</template>
+						<template #inactive-action>
+							<el-icon>
+								<Sunny color="{{ changeTheme }}" />
+							</el-icon>
+						</template>
+					</el-switch>
+				</el-col>
+				<el-col :xs="4" :sm="6" :md="8" :lg="9" :xl="11">
+					<el-avatar src="https://null.com"> user </el-avatar>
+				</el-col>
+			</el-row>
 		</el-header>
-		
+
 		<!-- 内容区域 -->
 		<el-main>
 			<router-view />
@@ -67,7 +71,7 @@ const toggleDark = useToggle(isDark);  // 用于切换深色和浅色模式
 const activeIndex = ref('1')
 // 更新当前标签, 都会触发这个
 const handleSelect = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath)
+	console.log(key, keyPath)
 }
 
 // 主题颜色
@@ -90,20 +94,26 @@ const changeThemeColor = (color: string) => {
 
 <style lang="scss">
 /* 设置靠左 */
-.el-menu--horizontal > .el-menu-item:nth-child(1) {
+.el-menu--horizontal>.el-menu-item:nth-child(1) {
 	margin-right: 0;
+}
+
+.el-menu--horizontal > .el-menu-item.is-active {
+	.el-menu-right {
+		border-bottom: 0px solid var(--el-menu-active-color);
+		color: var(--el-menu-active-color) !important;
+	}
 }
 
 .head {
 	display: flex;
-	justify-content: space-between; /* 分散对齐 */
-	align-items: center; /* 垂直居中 */
-	position: relative; /* 为了绝对定位 */
+	justify-content: space-between;
+	/* 分散对齐 */
+	align-items: center;
+	/* 垂直居中 */
+	position: relative;
 
-	.switch-dark {
-		position: absolute;
-		top: 10px; /* 调整距离顶部的距离 */
-		right: 10px; /* 调整距离右边的距离 */
-	}
+	/* 设置边框 */
+	border-bottom: 1px solid var(--el-border-color);
 }
 </style>
