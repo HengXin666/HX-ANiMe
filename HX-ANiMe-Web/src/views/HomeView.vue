@@ -5,7 +5,7 @@
 				@select="handleSelect">
 				<el-menu-item index="0">
 					<router-link to="/info">
-						<img width="100" src="@/views/img/logo/HX-ANiMe.png" alt="Logo" />
+						<img width="140" src="@/views/img/logo/HX-ANiMe.png" alt="Logo" />
 					</router-link>
 				</el-menu-item>
 				<el-menu-item index="1">
@@ -128,7 +128,20 @@ const changeThemeColor = (color: string) => {
 	background-color: #282828;
 
 	.el-menu {
-		background-color: #282828;
+		/* 菜单背景颜色 */
+		--el-menu-bg-color: #282828;
+		/* 菜单文字颜色 */
+		--el-menu-text-color: #f0f0f0;
+
+		/* 菜单选择后的文字颜色 */
+		--active-text-color: var(--el-menu-active-color);
+
+		/* 自定义鼠标悬浮时候的项的样式 */
+		.el-menu-item {
+			&:hover {
+				background-color: #282828; /* 不需要变色 */
+			}
+		}
 	}
 
 	.row-wrapper {
