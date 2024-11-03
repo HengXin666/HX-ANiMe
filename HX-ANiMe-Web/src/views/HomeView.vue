@@ -1,5 +1,5 @@
 <template>
-	<el-container>
+	<el-container class="outside-container">
 		<el-header class="head">
 			<el-menu :default-active="activeIndex" class="el-menu" mode="horizontal" :ellipsis="false"
 				@select="handleSelect">
@@ -62,7 +62,8 @@
 	</div>
  */
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router';
 import { useStorage } from '@vueuse/core';
 import { useElementPlusTheme } from 'use-element-plus-theme';
 import { useDark, useToggle } from '@vueuse/core';
@@ -76,9 +77,28 @@ const toggleDark = useToggle(isDark);  // 用于切换深色和浅色模式
 
 // 初始化页面索引
 const activeIndex = ref('1')
+const route = useRoute(); // 获取当前路由
+
+// 在组件挂载后更新 activeIndex
+onMounted(() => {
+  switch (route.path) {
+    case '/info':
+      activeIndex.value = '0';
+      break;
+    case '/dashboard':
+      activeIndex.value = '1';
+      break;
+    case '/force-graph':
+      activeIndex.value = '2';
+      break;
+    default:
+      activeIndex.value = '1'; // 默认选中 Home
+  }
+});
+
 // 更新当前标签, 都会触发这个
 const handleSelect = (key: string, keyPath: string[]) => {
-	console.log(key, keyPath)
+	// console.log(key, keyPath)
 }
 
 // 主题颜色
@@ -110,6 +130,16 @@ const changeThemeColor = (color: string) => {
 		border-bottom: 0px solid var(--el-menu-active-color);
 		color: var(--el-menu-active-color) !important;
 	}
+}
+
+.outside-container{
+	height: 100vh;
+}
+
+.el-main{
+	align-items: stretch;
+	margin: 0;
+	padding: 0;
 }
 
 .head {
