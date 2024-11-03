@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, defineProps } from 'vue';
 import * as echarts from 'echarts';
 import { ElSwitch, ElButton } from 'element-plus';
 
@@ -15,7 +15,11 @@ import { ElSwitch, ElButton } from 'element-plus';
     <el-switch v-model="showNames" active-text="显示名称" inactive-text="隐藏名称"></el-switch>
     <el-button @click="resetView">回到中心</el-button>
 </div>
- */
+*/
+
+const props = defineProps({
+    layoutThemeColor: String, // 接收主题颜色
+});
 
 // 引用图表元素
 const chart = ref<HTMLElement | null>(null);
@@ -28,44 +32,35 @@ const myChart = ref<echarts.ECharts | null>(null);
 
 // 图表数据
 const webkitDep = {
+    // 节点数据
     nodes: [
-        { name: 'CV 1', category: 'CV', image: 'cv1.png' },
-        { name: 'Anime 1', category: 'Anime', image: 'anime1.png' },
-        { name: 'Character 1', category: 'Character', image: 'char1.png' },
+        { name: 'CV 1', category: 'CV' },
+        { name: 'Anime 1', category: 'Anime' },
+        { name: 'Character 1', category: 'Character' },
     ],
+    // 图例
     categories: [
         { name: 'CV' },
         { name: 'Anime' },
         { name: 'Character' },
     ],
+    // 边集数组
     links: [
         { source: 'CV 1', target: 'Anime 1' },
         { source: 'Anime 1', target: 'Character 1' },
     ],
 };
 
-// 检查图片是否存在
-async function checkImage(src: string) {
-    return new Promise<boolean>((resolve) => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-    });
-}
 
 // 创建节点数据
 async function createNodeData() {
     return Promise.all(webkitDep.nodes.map(async (node, idx) => {
-        const imageExists = await checkImage(node.image);
         return {
             ...node,
-            id: idx,
             // 根据是否存在头像选择符号
-            symbol: imageExists && showAvatars.value ? 'image' : 'circle',
-            symbolSize: imageExists && showAvatars.value ? [40, 40] : [20, 20],
+            symbolSize: [40, 40],
             itemStyle: {
-                image: imageExists && showAvatars.value ? node.image : undefined,
+                image: undefined,
                 borderColor: '#fff',
                 borderWidth: 2,
             },
@@ -74,9 +69,92 @@ async function createNodeData() {
                 formatter: `{b}`,
                 position: 'bottom',
             },
+            
         };
     }));
 }
+
+// 在组件挂载后初始化图表
+onMounted(async () => {
+    if (chart.value) {
+        myChart.value = echarts.init(chart.value); // 初始化图表
+        myChart.value.showLoading(); // 显示加载动画
+
+        const nodeData = await createNodeData(); // 获取节点数据
+
+        // 图表配置
+        const option = {
+            legend: {
+                data: ['CV', 'Anime', 'Character'] // 图例数据
+            },
+            series: [
+                {
+                    type: 'graph', // 图表类型为图
+                    layout: 'force', // 力导向布局
+                    animation: true, // 开启动画
+                    draggable: true, // 允许拖动节点
+                    data: nodeData,  // 指定数据
+                    categories: webkitDep.categories, // 指定分类
+                    force: {
+                        edgeLength: 100, // 边的长度
+                        repulsion: 100, // 排斥力
+                        gravity: 0.1, // 重力
+                    },
+                    edges: webkitDep.links, // 边的数据
+                    label: {
+                        position: 'right',
+                        formatter: '{b}', // 标签格式
+                    },
+                    roam: 'scale', // 只允许缩放
+                    edgeSymbol: ['circle', 'arrow'], // 箭头样式
+                    // 连线样式
+                    lineStyle: {
+                        color: props.layoutThemeColor,
+                        width: 2,
+                    },
+                },
+            ],
+        };
+
+        myChart.value.setOption(option); // 设置图表选项
+
+        myChart.value.hideLoading(); // 隐藏加载动画
+
+        // 观察显示名称的变化
+        // watch(showNames, () => {
+        //     myChart.value?.setOption({
+        //         series: [{
+        //             label: {
+        //                 show: showNames.value,
+        //                 formatter: `{b}`, // 标签格式
+        //             },
+        //         }],
+        //     });
+        // });
+
+        // 观察显示头像的变化
+        // watch(showAvatars, async () => {
+        //     const nodeData = await createNodeData();
+        //     myChart.value?.setOption({
+        //         series: [{
+        //             data: nodeData,
+        //         }],
+        //     });
+        // });
+
+        // 窗口调整时图表自适应
+        window.addEventListener('resize', () => {
+            myChart.value?.resize();
+        });
+
+        // 在组件销毁时移除事件监听器
+        onBeforeUnmount(() => {
+            window.removeEventListener('resize', () => {
+                myChart.value?.resize();
+            });
+        });
+    }
+});
 
 // 添加新节点
 function addNode() {
@@ -114,81 +192,6 @@ function resetView() {
         });
     }
 }
-
-// 在组件挂载后初始化图表
-onMounted(async () => {
-    if (chart.value) {
-        myChart.value = echarts.init(chart.value); // 初始化图表
-        myChart.value.showLoading(); // 显示加载动画
-
-        const nodeData = await createNodeData(); // 获取节点数据
-
-        // 图表配置
-        const option = {
-            legend: {
-                data: ['CV', 'Anime', 'Character'] // 图例数据
-            },
-            series: [
-                {
-                    type: 'graph', // 图表类型为图
-                    layout: 'force', // 力导向布局
-                    animation: true,
-                    draggable: true, // 允许拖动节点
-                    data: nodeData,
-                    categories: webkitDep.categories,
-                    force: {
-                        edgeLength: 50, // 边的长度
-                        repulsion: 100, // 排斥力
-                        gravity: 0.2, // 重力
-                    },
-                    edges: webkitDep.links, // 边的数据
-                    label: {
-                        position: 'right',
-                        formatter: '{b}', // 标签格式
-                    },
-                },
-            ],
-            zoom: 1, // 默认缩放级别
-        };
-
-        myChart.value.setOption(option); // 设置图表选项
-        myChart.value.hideLoading(); // 隐藏加载动画
-
-        // 观察显示名称的变化
-        watch(showNames, () => {
-            myChart.value?.setOption({
-                series: [{
-                    label: {
-                        show: showNames.value,
-                        formatter: `{b}`, // 标签格式
-                    },
-                }],
-            });
-        });
-
-        // 观察显示头像的变化
-        watch(showAvatars, async () => {
-            const nodeData = await createNodeData();
-            myChart.value?.setOption({
-                series: [{
-                    data: nodeData,
-                }],
-            });
-        });
-
-        // 窗口调整时图表自适应
-        window.addEventListener('resize', () => {
-            myChart.value?.resize();
-        });
-
-        // 在组件销毁时移除事件监听器
-        onBeforeUnmount(() => {
-            window.removeEventListener('resize', () => {
-                myChart.value?.resize();
-            });
-        });
-    }
-});
 </script>
 
 <style lang="scss">

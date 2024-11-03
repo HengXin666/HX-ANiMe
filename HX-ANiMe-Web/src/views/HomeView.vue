@@ -41,7 +41,7 @@
 
 		<!-- 内容区域 -->
 		<el-main>
-			<router-view style="height: max-content;" />
+			<router-view style="height: max-content;" :layout-theme-color="layoutThemeColor" />
 		</el-main>
 	</el-container>
 </template>
