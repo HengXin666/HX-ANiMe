@@ -30,6 +30,39 @@ const showNames = ref(true);
 // ECharts 实例
 const myChart = ref<echarts.ECharts | null>(null);
 
+/**
+ * 后端存储架构 (到时候字段名统一一下嗷)
+ * 
+ * 结点表:
+ *  唯一自增id
+ *  类型:
+ *  - anime 结点
+ *      - animeName (原名)
+ *      - animeNameByCN (中文名)
+ *      - img (番剧图片)
+ *      - describe (描述)
+ * 
+ *  - kyara(角色) 结点
+ *      - kyaraName (原名)
+ *      - kyaraNameByCN (中文名)
+ *      - img (角色图片)
+ *      - describe (描述)
+
+ *  - CV结点
+ *      - CVName (原名)
+ *      - CVNameByCN (中文名)
+ *      - img (图片)
+ *      - describe (描述)
+ * 
+ * 结点备注表:
+ *  // 本表为灵活的数据增量适配, 因为是mysql而不是芒果db
+ *  唯一自增id, 结点表id, 备注key, 备注val
+ *  // 如果前端需要添加而外的项, 则先判断是否有这个项的key, 有则改(覆盖); 否则才插入. 
+ * 
+ * 边集表:
+ *  key, fromId, toId
+ */
+
 // 图表数据
 const webkitDep = {
     // 节点数据
@@ -62,14 +95,13 @@ async function createNodeData() {
             itemStyle: {
                 image: undefined,
                 borderColor: '#fff',
-                borderWidth: 2,
+                borderWidth: 0,
             },
             label: {
-                show: showNames.value,
+                // show: showNames.value,
                 formatter: `{b}`,
                 position: 'bottom',
             },
-            
         };
     }));
 }
@@ -85,7 +117,7 @@ onMounted(async () => {
         // 图表配置
         const option = {
             legend: {
-                data: ['CV', 'Anime', 'Character'] // 图例数据
+                data: ['CV', 'Anime', 'Character'], // 图例数据
             },
             series: [
                 {
@@ -101,10 +133,6 @@ onMounted(async () => {
                         gravity: 0.1, // 重力
                     },
                     edges: webkitDep.links, // 边的数据
-                    label: {
-                        position: 'right',
-                        formatter: '{b}', // 标签格式
-                    },
                     roam: 'scale', // 只允许缩放
                     edgeSymbol: ['circle', 'arrow'], // 箭头样式
                     // 连线样式
