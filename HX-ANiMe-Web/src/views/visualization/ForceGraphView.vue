@@ -37,7 +37,8 @@ const myChart = ref<echarts.ECharts | null>(null);
  * 还需要一个用户id, 和用户的图id(一个用户可能有多个表) | <-- 摊牌了, 不搞企业级, 不搞该死的分库分表..
  * 
  * 结点表:
- *  |(内键)节点id|用户id(外键)|用户表id(外键)|图例id(外键)|原名|译名|imgUrl|描述|
+ *  |(内键)节点id|用户id(外键)|用户表id(外键)|图例id(外键)|名称|imgUrl|描述|
+ *  - 注: 名称附带样式, 这样如果需要什么注音的也可以搞
  * 
  * 结点备注表:
  *  // 本表为灵活的数据增量适配, 因为是mysql而不是芒果db
@@ -102,9 +103,9 @@ const myChart = ref<echarts.ECharts | null>(null);
 const webkitDep = {
     // 节点数据
     nodes: [
-        { name: 'CV 1', category: 'CV' },
-        { name: 'Anime 1', category: 'Anime' },
-        { name: 'Character 1', category: 'Character' },
+        { id: '1', name: 'CV 1', category: 'CV' },
+        { id: '2', name: 'Anime 1', category: 'Anime' },
+        { id: '3', name: 'Character 1', category: 'Character' },
     ],
     // 图例
     categories: [
@@ -114,8 +115,8 @@ const webkitDep = {
     ],
     // 边集数组
     links: [
-        { source: 'CV 1', target: 'Anime 1' },
-        { source: 'Anime 1', target: 'Character 1' },
+        { source: '1', target: '2' },
+        { source: '2', target: '3' },
     ],
 };
 
@@ -224,6 +225,7 @@ onMounted(async () => {
 // 添加新节点
 function addNode() {
     const newNode = {
+        id: '1xx', // 不对
         name: `新节点 ${webkitDep.nodes.length + 1}`,
         category: 'Character',
         image: 'default.png', // 使用默认图片
@@ -257,6 +259,8 @@ function resetView() {
         });
     }
 }
+
+// 支持可导出: https://echarts.apache.org/zh/api.html#echartsInstance.renderToSVGString
 </script>
 
 <style lang="scss">
