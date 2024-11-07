@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount, defineProps } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, defineProps, markRaw } from 'vue';
 import * as echarts from 'echarts';
 import { ElSwitch, ElButton } from 'element-plus';
 
@@ -100,23 +100,24 @@ const myChart = ref<echarts.ECharts | null>(null);
  */
 
 // 图表数据
+// 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
 const webkitDep = {
     // 节点数据
     nodes: [
-        { id: '1', name: 'CV 1', category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV', },
-        { id: '2', name: 'Anime 1', category: 'Anime', img: '', describe: '这个是アニメ', },
-        { id: '3', name: 'Character 1', category: 'Character', img: '', describe: '这个是角色', },
+        { id: 1, name: 'CV 1', category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV', },
+        { id: 2, name: 'Anime 1', category: 'Anime', img: '', describe: '这个是アニメ', },
+        { id: 3, name: 'Character 1', category: 'Character', img: '', describe: '这个是角色', },
     ],
     // 图例
     categories: [
-        { id: '1', name: 'CV', color: '#990099'},
-        { id: '2', name: 'Anime', color: '#ff9' },
-        { id: '3', name: 'Character', color: 'yellow' },
+        { id: 1, name: 'CV', color: '#990099'},
+        { id: 2, name: 'Anime', color: '#ff9' },
+        { id: 3, name: 'Character', color: 'yellow' },
     ],
     // 边集数组
     links: [
-        { source: '1', target: '2' },
-        { source: '2', target: '3' },
+        { id: 1, source: '1', target: '2' },
+        { id: 2, source: '2', target: '3' },
     ],
 };
 
@@ -139,7 +140,7 @@ const createNodeData = async() => {
             },
             label: {
                 normal: {
-                    // show: showNames.value,
+                    show: null, // showNames.value,
                     formatter: `{b}\n${node.describe}`,
                     color: '#f9',
                     position: 'bottom',
@@ -163,7 +164,8 @@ const createNodeData = async() => {
 // 在组件挂载后初始化图表
 onMounted(async () => {
     if (chart.value) {
-        myChart.value = echarts.init(chart.value); // 初始化图表
+        // https://juejin.cn/post/7130211001235931167 解决legend残留问题
+        myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
 
         const nodeData = await createNodeData(); // 获取节点数据
@@ -185,7 +187,7 @@ onMounted(async () => {
                     force: {
                         edgeLength: [200, 500], // 边的长度
                         repulsion: 100, // 排斥力
-                        gravity: 0.1, // 重力
+                        gravity: 0.025, // 向中心的引力因子
                     },
                     edges: webkitDep.links, // 边的数据
                     roam: true, // ('scale')只允许缩放
@@ -251,7 +253,7 @@ function addNode() {
     };
 
     // webkitDep.nodes.push(newNode);
-    webkitDep.links.push({ source: newNode.name, target: 'CV 1' });
+    // webkitDep.links.push({  source: newNode.name, target: 'CV 1' });
 
     createNodeData().then(nodeData => {
         if (myChart.value) {
