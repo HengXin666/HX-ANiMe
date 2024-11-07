@@ -103,15 +103,15 @@ const myChart = ref<echarts.ECharts | null>(null);
 const webkitDep = {
     // 节点数据
     nodes: [
-        { id: '1', name: 'CV 1', category: 'CV' },
-        { id: '2', name: 'Anime 1', category: 'Anime' },
-        { id: '3', name: 'Character 1', category: 'Character' },
+        { id: '1', name: 'CV 1', category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV', },
+        { id: '2', name: 'Anime 1', category: 'Anime', img: '', describe: '这个是アニメ', },
+        { id: '3', name: 'Character 1', category: 'Character', img: '', describe: '这个是角色', },
     ],
     // 图例
     categories: [
-        { name: 'CV' },
-        { name: 'Anime' },
-        { name: 'Character' },
+        { id: '1', name: 'CV', color: '#990099'},
+        { id: '2', name: 'Anime', color: '#ff9' },
+        { id: '3', name: 'Character', color: 'yellow' },
     ],
     // 边集数组
     links: [
@@ -124,25 +124,41 @@ const webkitDep = {
 // 创建节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
-async function createNodeData() {
+const createNodeData = async() => {
     return Promise.all(webkitDep.nodes.map(async (node, idx) => {
         return {
-            ...node,
+            id: node.id,
+            name: node.name,
+            category: node.category,
             // 根据是否存在头像选择符号
-            symbolSize: [40, 40],
+            symbol: node.img !== '' ? 'image://' + node.img : 'circle',
+            symbolSize: [128, 128],
             itemStyle: {
-                image: undefined,
                 borderColor: '#fff',
                 borderWidth: 0,
             },
             label: {
-                // show: showNames.value,
-                formatter: `{b}`,
-                position: 'bottom',
+                normal: {
+                    // show: showNames.value,
+                    formatter: `{b}\n${node.describe}`,
+                    color: '#f9',
+                    position: 'bottom',
+                }
             },
         };
     }));
 }
+
+// const createLegendData = async () => {
+//     return Promise.all(webkitDep.categories.map(async (legend, idx) => {
+//         return {
+//             name: legend.name,
+//             itemStyle: {
+//                 color: legend.color
+//             }
+//         };
+//     }));
+// };
 
 // 在组件挂载后初始化图表
 onMounted(async () => {
@@ -154,6 +170,7 @@ onMounted(async () => {
 
         // 图表配置
         const option = {
+            color: webkitDep.categories.map(it => it.color), // 图例颜色
             legend: {
                 data: ['CV', 'Anime', 'Character'], // 图例数据
             },
@@ -166,12 +183,12 @@ onMounted(async () => {
                     data: nodeData,  // 指定数据
                     categories: webkitDep.categories, // 指定分类
                     force: {
-                        edgeLength: 100, // 边的长度
+                        edgeLength: [200, 500], // 边的长度
                         repulsion: 100, // 排斥力
                         gravity: 0.1, // 重力
                     },
                     edges: webkitDep.links, // 边的数据
-                    roam: 'scale', // 只允许缩放
+                    roam: true, // ('scale')只允许缩放
                     edgeSymbol: ['circle', 'arrow'], // 箭头样式
                     // 连线样式
                     lineStyle: {
@@ -182,9 +199,9 @@ onMounted(async () => {
             ],
         };
 
+        myChart.value.hideLoading(); // 隐藏加载动画
         myChart.value.setOption(option); // 设置图表选项
 
-        myChart.value.hideLoading(); // 隐藏加载动画
 
         // 观察显示名称的变化
         // watch(showNames, () => {
@@ -214,11 +231,13 @@ onMounted(async () => {
         });
 
         // 在组件销毁时移除事件监听器
-        onBeforeUnmount(() => {
-            window.removeEventListener('resize', () => {
-                myChart.value?.resize();
-            });
-        });
+        // onBeforeUnmount(() => {
+        //     window.removeEventListener('resize', () => {
+        //         myChart.value?.resize();
+        //     });
+        // });
+
+
     }
 });
 
@@ -231,7 +250,7 @@ function addNode() {
         image: 'default.png', // 使用默认图片
     };
 
-    webkitDep.nodes.push(newNode);
+    // webkitDep.nodes.push(newNode);
     webkitDep.links.push({ source: newNode.name, target: 'CV 1' });
 
     createNodeData().then(nodeData => {
