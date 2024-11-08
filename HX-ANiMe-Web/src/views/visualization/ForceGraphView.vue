@@ -22,16 +22,19 @@
         <el-dialog v-model="dialogVisible" title="添加结点" :draggable="true" width="500px">
             <div class="dialog-add-node">
                 <!-- 结点名称输入框 -->
-                <el-form :model="nodeForm" label-width="100px">
+                <el-form :model="nodeForm" label-width="80">
                     <el-form-item label="结点名称">
                         <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
                     </el-form-item>
 
-                    <!-- 结点类型下拉选择框或输入框 -->
+                    <!-- 结点类型下拉选择框或输入框以及其颜色 -->
                     <el-form-item label="结点类型">
-                        <el-select v-model="nodeForm.categories" placeholder="请选择结点类型" filterable allow-create>
-                            <el-option v-for="item in nodeTypes" :key="item" :label="item" :value="item"></el-option>
-                        </el-select>
+                        <div style="display: flex; align-items: center; width: 350px;">
+                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha :predefine="predefineColors" />
+                            <el-select v-model="nodeForm.categories" placeholder="请选择结点类型" filterable allow-create @change="categoriesSelectChange">
+                                <el-option v-for="item in nodeLegendList" :key="item" :label="item" :value="item"></el-option>
+                            </el-select>
+                        </div>
                     </el-form-item>
 
                     <!-- 结点图片上传 -->
@@ -109,8 +112,8 @@ const webkitDep = {
     // 图例
     categories: [
         { id: 1, name: 'CV', color: '#990099' },
-        { id: 2, name: 'Anime', color: '#ff9' },
-        { id: 3, name: 'Character', color: 'yellow' },
+        { id: 2, name: 'Anime', color: '#334455' },
+        { id: 3, name: 'Character', color: '#D6B782' },
     ],
     // 边集数组
     links: [
@@ -146,7 +149,7 @@ const createNodeData = async () => {
             },
         };
     }));
-}
+};
 
 // 在组件挂载后初始化图表
 onMounted(async () => {
@@ -227,7 +230,7 @@ const addNode = async (node: Node) => {
             });
         }
     });
-}
+};
 
 const resetPosition = () => {
     // 重置视图到中心
@@ -262,8 +265,35 @@ const nodeForm = ref({
     imageUrl: "",    // 网络图片地址
 });
 
+// 选择结点图例颜色
+const legendColor = ref('red');
+const predefineColors = ref([
+  '#ff4500',
+  '#ff8c00',
+  '#ffd700',
+  '#90ee90',
+  '#00ced1',
+  '#1e90ff',
+  '#c71585',
+  'rgba(255, 69, 0, 0.68)',
+  'rgb(255, 120, 0)',
+  'hsv(51, 100, 98)',
+  'hsva(120, 40, 94, 0.5)',
+  'hsl(181, 100%, 37%)',
+  'hsla(209, 100%, 56%, 0.73)',
+  '#c7158577',
+]);
+
 // 结点类型选项
-const nodeTypes = webkitDep.categories.map(it => it.name);
+const nodeLegendList = webkitDep.categories.map(it => it.name);
+
+// 选择结点图例时候触发
+const categoriesSelectChange = (name: string) => {
+    const it = webkitDep.categories.find(dict => dict.name === name);
+    if (it) {
+        legendColor.value = it.color;
+    }
+};
 
 // 打开弹窗
 const openDialog = () => {
@@ -362,7 +392,7 @@ const previewImage = (file: File) => {
         ElMessage.error('图片读取失败');
     };
     reader.readAsDataURL(file);
-}
+};
 
 // 确认上传
 const confirmUpload = () => {
@@ -373,7 +403,7 @@ const confirmUpload = () => {
     } else {
         ElMessage.warning('请先选择图片或输入图片URL');
     }
-}
+};
 
 // 上传图片到后端函数
 const uploadImage = (image: File | string) => {
@@ -386,7 +416,7 @@ const uploadImage = (image: File | string) => {
         console.log('上传图片URL', image);
     }
     ElMessage.success('图片上传成功');
-}
+};
 
 // === End === 添加结点逻辑 === End ===
 
