@@ -47,7 +47,8 @@
                     </el-form-item>
 
                     <el-form-item>
-                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>" raw-content placement="left">
+                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
+                            raw-content placement="left">
                             <!-- 结点图片上传 -->
                             <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
                                 :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
@@ -92,7 +93,7 @@ import { useSettingStore } from '@/stores/useSettingsStore';
 import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
 
 // 断言结点类型
-interface Node {
+interface NodeType {
     id: number;
     name: string;
     category: string;
@@ -218,17 +219,8 @@ onMounted(async () => {
 });
 
 // 添加新节点
-const addNode = async (node: Node) => {
-    const newNode = {
-        id: '1xx', // 不对
-        name: `新节点 ${webkitDep.nodes.length + 1}`,
-        category: 'Character',
-        image: 'default.png', // 使用默认图片
-    };
-
-    // webkitDep.nodes.push(newNode);
-    // webkitDep.links.push({  source: newNode.name, target: 'CV 1' });
-
+const addNode = async (node: NodeType) => {
+    webkitDep.nodes.push(node);
     createNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
@@ -242,15 +234,20 @@ const addNode = async (node: Node) => {
 };
 
 const resetPosition = () => {
-    // 重置视图到中心
+    // 重置视图到中心, 并且重置缩放
     if (myChart.value) {
-        // myChart.value.dispatchAction({
-        //     type: 'dataZoom',
-        //     start: 0,
-        //     end: 100,
-        // });
         myChart.value.dispatchAction({
-            type: 'restore',
+            type: 'dataZoom',
+            start: 0,
+            end: 100,
+        });
+
+        myChart.value.setOption({
+            series: [{
+                zoom: 1,
+                center: 1,
+                // 其他参数保持不变
+            }]
         });
     }
 };
@@ -260,9 +257,20 @@ const openSettings = () => {
     console.log("打开设置")
 };
 
+// === Begin === 鼠标事件捕获 === Begin ===
+// 取消浏览器默认右键菜单
+document.addEventListener('contextmenu', event => event.preventDefault());
 
-// === Begin === 添加结点逻辑 === Begin ===
-const dialogVisible = ref(true);
+// 边的起点和终点节点 ID
+let startNodeId: string | null = null;
+let endNodeId: string | null = null;
+
+
+
+// === End === 鼠标事件捕获 === End ===
+
+// === Begin === 添加结点界面逻辑 === Begin ===
+const dialogVisible = ref(false);
 
 const nodeForm = ref({
     // 结点名称
@@ -313,7 +321,7 @@ const openDialog = () => {
 
 // 重置表单
 const resetForm = () => {
-    nodeForm.value = { name: "", categories: "", image: "", imageUrl: "" };
+    nodeForm.value = { name: "", categories: "", image: "", imageUrl: "", describe: "" };
 };
 
 // 关闭弹窗
@@ -321,15 +329,32 @@ const closeDialog = () => {
     dialogVisible.value = false;
 };
 
+// 测试添加结点
+const _addNodeTest = () => {
+    const node: NodeType = {
+        id: webkitDep.nodes.length + 1,
+        name: nodeForm.value.name,
+        category: nodeForm.value.categories,
+        img: nodeForm.value.imageUrl,
+        describe: nodeForm.value.describe
+    };
+    ElMessage.info("添加结点id:" + node.id);
+    addNode(node);
+};
+
 // 确认添加结点
 const confirmAddNode = () => {
     if (!nodeForm.value.name) {
         ElMessage.error("结点名称不能为空");
         return;
+    } else if (!nodeForm.value.categories) {
+        ElMessage.error("结点所属图例不能为空");
+        return;
     }
     // 在这里可以将数据提交到后端或在图表中添加节点
     console.log("添加结点数据：", nodeForm.value);
-    // http 需要获得结点的唯一id
+    _addNodeTest();
+    // http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
     closeDialog();
     resetForm();
 };
@@ -403,30 +428,6 @@ const previewImage = (file: File) => {
         ElMessage.error('图片读取失败');
     };
     reader.readAsDataURL(file);
-};
-
-// 确认上传
-const confirmUpload = () => {
-    if (cachedFile.value) {
-        uploadImage(cachedFile.value);
-    } else if (inputUrl.value) {
-        uploadImage(inputUrl.value);
-    } else {
-        ElMessage.warning('请先选择图片或输入图片URL');
-    }
-};
-
-// 上传图片到后端函数
-const uploadImage = (image: File | string) => {
-    // 这里可以实现上传逻辑
-    if (image instanceof File) {
-        // 处理文件上传逻辑
-        console.log('上传文件', image);
-    } else {
-        // 处理 URL 上传逻辑
-        console.log('上传图片URL', image);
-    }
-    ElMessage.success('图片上传成功');
 };
 
 // === End === 添加结点逻辑 === End ===
