@@ -1,13 +1,114 @@
 <template>
     <div>
         <div ref="chart" style="height: calc(100vh - 60px);"></div>
+
+        <!-- 固定在右下角的按钮组 -->
+        <div style="position: fixed; right: 30px; bottom: 10px;">
+            <el-tooltip content="重置位置" placement="top">
+                <el-button circle title="重置" size="large" :icon="RefreshRight" @click="resetPosition" style="margin-bottom: 10px;" />
+            </el-tooltip>
+            <el-tooltip content="添加结点" placement="top">
+                <el-button circle title="添加" size="large" :icon="Plus" @click="openDialog" style="margin-bottom: 10px;" />
+            </el-tooltip>
+            <el-tooltip content="设置" placement="top">
+                <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings" style="margin-bottom: 10px;" />
+            </el-tooltip>
+        </div>
+
+        <!-- 可拖动的弹出窗口 -->
+        <el-dialog
+            v-model="dialogVisible"
+            title="添加结点"
+            :draggable="true"
+            width="500px"
+            @close="resetForm"
+        >
+            <div>
+                <!-- 结点名称输入框 -->
+                <el-form :model="nodeForm" label-width="100px">
+                    <el-form-item label="结点名称">
+                        <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
+                    </el-form-item>
+
+                    <!-- 结点类型下拉选择框或输入框 -->
+                    <el-form-item label="结点类型">
+                        <el-select v-model="nodeForm.categories" placeholder="请选择结点类型" filterable allow-create>
+                            <el-option
+                                v-for="item in nodeTypes"
+                                :key="item"
+                                :label="item"
+                                :value="item"
+                            ></el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <!-- 结点图片上传 -->
+                    <el-form-item label="结点图片">
+                        <el-upload
+                            class="upload-demo"
+                            action=""
+                            :on-change="handleFileChange"
+                            :show-file-list="false"
+                            :before-upload="beforeUpload"
+                        >
+                            <el-button size="small" type="primary">点击上传图片</el-button>
+                        </el-upload>
+                        <div v-if="nodeForm.image" style="margin-top: 10px;">
+                            <img :src="nodeForm.image" alt="结点图片" style="width: 100px; height: auto;" />
+                        </div>
+                    </el-form-item>
+
+                    <!-- 从网络导入 -->
+                    <el-form-item label="网络图片">
+                        <el-input v-model="nodeForm.imageUrl" placeholder="请输入网络图片地址"></el-input>
+                        <el-button @click="importFromUrl" style="margin-top: 5px;">导入图片</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <!-- 底部按钮组 -->
+            <template #footer>
+                <el-button @click="closeDialog">取消</el-button>
+                <el-button type="primary" @click="confirmAddNode">确认</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount, defineProps, markRaw } from 'vue';
 import * as echarts from 'echarts';
-import { ElSwitch, ElButton } from 'element-plus';
+import { useSettingStore } from '@/stores/useSettingsStore';
+import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
+import { ElButton, ElMessage } from 'element-plus';
+
+// 断言结点类型
+interface Node {
+    id: number;
+    name: string;
+    category: string;
+    img: string;
+    describe: string;
+};
+
+const resetPosition = () => {
+    // 重置视图到中心
+    if (myChart.value) {
+        // myChart.value.dispatchAction({
+        //     type: 'dataZoom',
+        //     start: 0,
+        //     end: 100,
+        // });
+        myChart.value.dispatchAction({
+            type: 'restore',
+        });
+    }
+};
+
+const openSettings = () => {
+    // 打开设置的逻辑
+    console.log("打开设置")
+};
 
 /**
 <div style="margin-bottom: 10px; z-index: 1; position: relative;">
@@ -17,9 +118,8 @@ import { ElSwitch, ElButton } from 'element-plus';
 </div>
 */
 
-const props = defineProps({
-    layoutThemeColor: String, // 接收主题颜色
-});
+const settingStore = useSettingStore();
+const layoutThemeColor = settingStore.theme.color;  // 默认主题色
 
 // 引用图表元素
 const chart = ref<HTMLElement | null>(null);
@@ -110,7 +210,7 @@ const webkitDep = {
     ],
     // 图例
     categories: [
-        { id: 1, name: 'CV', color: '#990099'},
+        { id: 1, name: 'CV', color: '#990099' },
         { id: 2, name: 'Anime', color: '#ff9' },
         { id: 3, name: 'Character', color: 'yellow' },
     ],
@@ -125,7 +225,7 @@ const webkitDep = {
 // 创建节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
-const createNodeData = async() => {
+const createNodeData = async () => {
     return Promise.all(webkitDep.nodes.map(async (node, idx) => {
         return {
             id: node.id,
@@ -133,7 +233,7 @@ const createNodeData = async() => {
             category: node.category,
             // 根据是否存在头像选择符号
             symbol: node.img !== '' ? 'image://' + node.img : 'circle',
-            symbolSize: [128, 128],
+            symbolSize: [48, 48],
             itemStyle: {
                 borderColor: '#fff',
                 borderWidth: 0,
@@ -174,7 +274,7 @@ onMounted(async () => {
         const option = {
             color: webkitDep.categories.map(it => it.color), // 图例颜色
             legend: {
-                data: ['CV', 'Anime', 'Character'], // 图例数据
+                data: webkitDep.categories.map(it => it.name), // 图例数据
             },
             series: [
                 {
@@ -185,7 +285,7 @@ onMounted(async () => {
                     data: nodeData,  // 指定数据
                     categories: webkitDep.categories, // 指定分类
                     force: {
-                        edgeLength: [200, 500], // 边的长度
+                        edgeLength: [50, 200], // 边的长度
                         repulsion: 100, // 排斥力
                         gravity: 0.025, // 向中心的引力因子
                     },
@@ -194,7 +294,7 @@ onMounted(async () => {
                     edgeSymbol: ['circle', 'arrow'], // 箭头样式
                     // 连线样式
                     lineStyle: {
-                        color: props.layoutThemeColor,
+                        color: layoutThemeColor,
                         width: 2,
                     },
                 },
@@ -204,47 +304,22 @@ onMounted(async () => {
         myChart.value.hideLoading(); // 隐藏加载动画
         myChart.value.setOption(option); // 设置图表选项
 
-
-        // 观察显示名称的变化
-        // watch(showNames, () => {
-        //     myChart.value?.setOption({
-        //         series: [{
-        //             label: {
-        //                 show: showNames.value,
-        //                 formatter: `{b}`, // 标签格式
-        //             },
-        //         }],
-        //     });
-        // });
-
-        // 观察显示头像的变化
-        // watch(showAvatars, async () => {
-        //     const nodeData = await createNodeData();
-        //     myChart.value?.setOption({
-        //         series: [{
-        //             data: nodeData,
-        //         }],
-        //     });
-        // });
-
         // 窗口调整时图表自适应
         window.addEventListener('resize', () => {
             myChart.value?.resize();
         });
 
         // 在组件销毁时移除事件监听器
-        // onBeforeUnmount(() => {
-        //     window.removeEventListener('resize', () => {
-        //         myChart.value?.resize();
-        //     });
-        // });
-
-
+        onBeforeUnmount(() => {
+            window.removeEventListener('resize', () => {
+                myChart.value?.resize();
+            });
+        });
     }
 });
 
 // 添加新节点
-function addNode() {
+const addNode = async (node: Node) => {
     const newNode = {
         id: '1xx', // 不对
         name: `新节点 ${webkitDep.nodes.length + 1}`,
@@ -267,22 +342,83 @@ function addNode() {
     });
 }
 
-// 重置视图到中心
-function resetView() {
-    if (myChart.value) {
-        myChart.value.dispatchAction({
-            type: 'dataZoom',
-            start: 0,
-            end: 100,
-        });
-        myChart.value.dispatchAction({
-            type: 'restore',
-        });
+// === Begin === 添加结点逻辑 === Begin ===
+const dialogVisible = ref(false);
+const nodeForm = ref({
+    // 结点名称
+    name: "",
+    // 图例
+    categories: "",
+    // 图片Url
+    image: "",       // 本地图片预览
+    imageUrl: "",    // 网络图片地址
+});
+
+// 结点类型选项
+const nodeTypes = webkitDep.categories.map(it => it.name);
+
+// 打开弹窗
+const openDialog = () => {
+    dialogVisible.value = true;
+};
+
+// 重置表单
+const resetForm = () => {
+    nodeForm.value = { name: "", categories: "", image: "", imageUrl: "" };
+};
+
+// 关闭弹窗
+const closeDialog = () => {
+    dialogVisible.value = false;
+    resetForm();
+};
+
+// 确认添加结点
+const confirmAddNode = () => {
+    if (!nodeForm.value.name) {
+        ElMessage.error("结点名称不能为空");
+        return;
     }
-}
+    // 在这里可以将数据提交到后端或在图表中添加节点
+    console.log("添加结点数据：", nodeForm.value);
+    // http 需要获得结点的唯一id
+    closeDialog();
+};
+
+// 处理图片文件上传
+const handleFileChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        nodeForm.value.image = event.target?.result as string;
+    };
+    // reader.readAsDataURL(file.raw);
+};
+
+// 限制文件类型和大小
+const beforeUpload = (file: File) => {
+    const isImage = file.type.startsWith("image/");
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isImage) {
+        ElMessage.error("只能上传图片文件");
+    }
+    if (!isLt2M) {
+        ElMessage.error("上传图片大小不能超过 2MB");
+    }
+    return isImage && isLt2M;
+};
+
+// 从网络导入图片
+const importFromUrl = () => {
+    if (nodeForm.value.imageUrl) {
+        nodeForm.value.image = nodeForm.value.imageUrl;
+    } else {
+        ElMessage.warning("请输入有效的图片地址");
+    }
+};
+
+// === End === 添加结点逻辑 === End ===
 
 // 支持可导出: https://echarts.apache.org/zh/api.html#echartsInstance.renderToSVGString
 </script>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>

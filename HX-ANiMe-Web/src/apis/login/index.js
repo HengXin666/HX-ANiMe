@@ -1,5 +1,5 @@
 import Request from "../request";
-import { userStore } from "@/stores/user";
+import { useUserStore } from "@/stores/useUserStore";
 
 // 定义一个功能模块基础url, 方便替换
 const currBaseUrl = "/login/";
@@ -11,7 +11,7 @@ const currBaseUrl = "/login/";
  * @param fail 登录失败回调
  */
 export const login = (data, success, fail) => {
-	const $store = userStore();
+	const $store = useUserStore();
 	Request.requestJson(Request.POST, currBaseUrl + "query-login", data)
 		.then((data) => {
 			// 记录Token到本地
@@ -39,7 +39,7 @@ export const login = (data, success, fail) => {
  * @param fail 注册失败回调
  */
 export const register = (data, success, fail) => {
-	const $store = userStore();
+	const $store = useUserStore();
 	Request.requestJson(Request.POST, currBaseUrl + "add-user", data)
 		.then((data) => {
 			// 记录Token到本地

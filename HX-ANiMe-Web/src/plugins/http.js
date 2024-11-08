@@ -2,7 +2,7 @@
 import http from "axios";
 import qs from "qs";
 import { ElMessage } from "element-plus";
-import { userStore } from "../stores/user";
+import { useUserStore } from "../stores/useUserStore";
 
 // 配置axios基本属性
 http.defaults.baseURL = import.meta.env.VITE_API_URL;
@@ -59,7 +59,7 @@ export default (router) => {
 	http.interceptors.request.use(
 		(config) => {
 			// 提交的时候携带登录凭证
-			let store = userStore();
+			let store = useUserStore();
 			let token = store.getToken;
 			if (token) {
 				config.headers.common.Authorization = `Bearer ${token}`;
@@ -90,7 +90,7 @@ export default (router) => {
 			// HTTP响应状态码正常
 			if (response.status === 200) {
 				if ("code" in response.data) {
-					let store = userStore();
+					let store = useUserStore();
 					const data = response.data;
 					switch (data.code) {
 						case http.httpcode.SUCCESS:

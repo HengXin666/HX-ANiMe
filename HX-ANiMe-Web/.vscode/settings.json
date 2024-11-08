@@ -6,6 +6,8 @@
     "package.json": "package-lock.json, pnpm*, .yarnrc*, yarn*, .eslint*, eslint*, .prettier*, prettier*, .editorconfig"
   },
   "cSpell.words": [
-    "echarts"
+    "echarts",
+    "pinia",
+    "vueuse"
   ]
 }

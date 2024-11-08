@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import Request from "@/apis/request";
 
-export const userStore = defineStore("user", {
+export const useUserStore = defineStore("user", {
 	state: () => ({
 		// 记录token
 		token: null,
@@ -35,7 +35,7 @@ export const userStore = defineStore("user", {
 		async loadMenus() {
 			// TODO[TEST_CODE]:此处写测试数据设定
 			// 测试基础数据菜单板块
-			this.menus = testMenus;
+			// this.menus = testMenus;
 
 			// 发送获取菜单请求
 			// let data = await Request.requestForm(

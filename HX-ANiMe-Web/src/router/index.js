@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { ElMessage } from "element-plus";
-import { userStore } from "../stores/user";
+import { useUserStore } from "../stores/useUserStore";
 
 const routes = [];
 routes.push(
@@ -55,7 +55,7 @@ router.beforeEach(async function (to, from, next) {
         return;
     }
     // 判断本地是否记录token值
-    let store = userStore();
+    let store = useUserStore();
     let token = store.getToken;
     // 如果有token
     if (token) {

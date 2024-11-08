@@ -64,13 +64,14 @@
 
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router';
-import { useStorage } from '@vueuse/core';
 import { useElementPlusTheme } from 'use-element-plus-theme';
 import { useDark, useToggle } from '@vueuse/core';
+import { useSettingStore } from '@/stores/useSettingsStore';
 import 'element-plus/theme-chalk/dark/css-vars.css' // 暗黑模式 css
 
-const layoutThemeColor = useStorage('layout-theme-color', '#990099');  // 默认主题色
-const { changeTheme } = useElementPlusTheme(layoutThemeColor.value);  // 初始化主题色
+const settingStore = useSettingStore();
+const layoutThemeColor = settingStore.theme.color;  // 默认主题色
+const { changeTheme } = useElementPlusTheme(layoutThemeColor);  // 初始化主题色
 
 const isDark = useDark();  // 检测当前是否为深色模式
 const toggleDark = useToggle(isDark);  // 用于切换深色和浅色模式
@@ -81,19 +82,19 @@ const route = useRoute(); // 获取当前路由
 
 // 在组件挂载后更新 activeIndex
 onMounted(() => {
-  switch (route.path) {
-    case '/info':
-      activeIndex.value = '0';
-      break;
-    case '/dashboard':
-      activeIndex.value = '1';
-      break;
-    case '/force-graph':
-      activeIndex.value = '2';
-      break;
-    default:
-      activeIndex.value = '1'; // 默认选中 Home
-  }
+	switch (route.path) {
+		case '/info':
+			activeIndex.value = '0';
+			break;
+		case '/dashboard':
+			activeIndex.value = '1';
+			break;
+		case '/force-graph':
+			activeIndex.value = '2';
+			break;
+		default:
+			activeIndex.value = '1'; // 默认选中 Home
+	}
 });
 
 // 更新当前标签, 都会触发这个
@@ -113,7 +114,7 @@ const themeColors = [
 ];
 
 const changeThemeColor = (color: string) => {
-	layoutThemeColor.value = color;  // 保存主题色
+	settingStore.theme.color = color;  // 保存主题色
 	changeTheme(color);  // 修改 Element Plus 组件主题色
 };
 
@@ -132,11 +133,11 @@ const changeThemeColor = (color: string) => {
 	}
 }
 
-.outside-container{
+.outside-container {
 	height: 100vh;
 }
 
-.el-main{
+.el-main {
 	align-items: stretch;
 	margin: 0;
 	padding: 0;
@@ -169,7 +170,8 @@ const changeThemeColor = (color: string) => {
 		/* 自定义鼠标悬浮时候的项的样式 */
 		.el-menu-item {
 			&:hover {
-				background-color: #282828; /* 不需要变色 */
+				background-color: #282828;
+				/* 不需要变色 */
 			}
 		}
 	}
