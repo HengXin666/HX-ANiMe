@@ -4,11 +4,11 @@
             <div :class="active === 1 ? 'form' : 'form hidden'">
                 <div class="title">欢迎<b>回来</b></div>
                 <div class="subtitle">登录您的账户</div>
-                <div class="inputf">
+                <div class="input">
                     <input type="text" placeholder="用户名" v-model="loginData.userName"/>
                     <span class="label">用户名</span>
                 </div>
-                <div class="inputf">
+                <div class="input">
                     <input type="password" placeholder="密码" v-model="loginData.password"/>
                     <span class="label">密码</span>
                 </div>
@@ -17,22 +17,22 @@
             <div :class="active === 2 ? 'form' : 'form hidden'">
                 <div class="title">开始</div>
                 <div class="subtitle">创建您的账户</div>
-                <div class="inputf">
+                <div class="input">
                     <input type="text" placeholder="用户名" v-model="registerData.userName"/>
                     <span class="label">用户名</span>
                 </div>
-                <div class="inputf">
+                <div class="input">
                     <input type="text" placeholder="邮箱" v-model="registerData.email"/>
                     <span class="label">邮箱</span>
                     <div :class="emailBlur() ? 'input-same' : 'input-no-same'">
                         请输入正确的邮箱
                     </div>
                 </div>
-                <div class="inputf">
+                <div class="input">
                     <input type="password" placeholder="密码" v-model="registerData.password"/>
                     <span class="label">密码</span>
                 </div>
-                <div class="inputf">
+                <div class="input">
                     <input type="password" placeholder="确认密码" v-model="registerData._passwordReview"/>
                     <span class="label">确认密码</span>
                     <div :class="passwordIsSame() ? 'input-same' : 'input-no-same'">
@@ -237,7 +237,7 @@ const submitRegisterForm = () => {
                 letter-spacing: 1px;
                 margin-bottom: 35px;
             }
-            .inputf {
+            .input {
                 width: 100%;
                 position: relative;
                 margin-bottom: 35px;
