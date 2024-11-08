@@ -19,7 +19,7 @@
         </div>
 
         <!-- 可拖动的弹出窗口 -->
-        <el-dialog v-model="dialogVisible" title="添加结点" :draggable="true" width="500px">
+        <el-dialog v-model="dialogVisible" title="添加结点" :draggable="true" width="550px">
             <div class="dialog-add-node">
                 <!-- 结点名称输入框 -->
                 <el-form :model="nodeForm" label-width="80">
@@ -28,46 +28,55 @@
                     </el-form-item>
 
                     <!-- 结点类型下拉选择框或输入框以及其颜色 -->
-                    <el-form-item label="结点类型">
-                        <div style="display: flex; align-items: center; width: 350px;">
-                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha :predefine="predefineColors" />
-                            <el-select v-model="nodeForm.categories" placeholder="请选择结点类型" filterable allow-create @change="categoriesSelectChange">
-                                <el-option v-for="item in nodeLegendList" :key="item" :label="item" :value="item"></el-option>
+                    <el-form-item label="所属图例">
+                        <div style="display: flex; align-items: center; width: 100%;">
+                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
+                                :predefine="predefineColors" />
+                            <el-select v-model="nodeForm.categories" placeholder="请选择结点所属图例" filterable allow-create
+                                @change="categoriesSelectChange">
+                                <el-option v-for="item in nodeLegendList" :key="item" :label="item"
+                                    :value="item"></el-option>
                             </el-select>
                         </div>
                     </el-form-item>
 
-                    <!-- 结点图片上传 -->
-                    <el-upload 
-                        drag 
-                        class="image-uploader" 
-                        :limit="1" 
-                        :auto-upload="false" 
-                        :show-file-list="false"
-                        :on-change="updateImage"
-                        :on-exceed="updateImageExceed"
-                        :accept="'image/*'"
-                    >
-                        <!-- 图片显示框 -->
-                        <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
-                        <div v-else class="image-preview empty">
-                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                            <div class="el-upload__text">
-                                拖拽图片到此处或 <em>点击上传</em>
-                            </div>
-                        </div>
-                    </el-upload>
-
                     <!-- 输入框 -->
-                    <div class="input-group">
+                    <el-form-item label="图片URL">
                         <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
                             @paste="handlePaste" />
-                    </div>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>" raw-content placement="left">
+                            <!-- 结点图片上传 -->
+                            <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
+                                :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
+                                :accept="'image/*'">
+                                <!-- 图片显示框 -->
+                                <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
+                                <div v-else class="image-preview empty">
+                                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                    <div class="el-upload__text">
+                                        拖拽图片到此处或 <em>点击上传</em>
+                                    </div>
+                                </div>
+                            </el-upload>
+                        </el-tooltip>
+                    </el-form-item>
+
+                    <el-form-item label="结点描述">
+                        <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
+                    </el-form-item>
                 </el-form>
             </div>
 
             <!-- 底部按钮组 -->
             <template #footer>
+                <!-- 高级按钮靠左并带有图标 -->
+                <el-button style="float: left; color: #409EFF; font-weight: bold;"
+                    @click="ElMessage.warning('高级')">高级</el-button>
+
+                <!-- 取消和确认按钮靠右 -->
                 <el-button @click="closeDialog">取消</el-button>
                 <el-button type="primary" @click="confirmAddNode">确认</el-button>
             </template>
@@ -263,25 +272,27 @@ const nodeForm = ref({
     // 图片Url
     image: "",       // 本地图片预览
     imageUrl: "",    // 网络图片地址
+    // 描述
+    describe: "",    // 描述
 });
 
 // 选择结点图例颜色
-const legendColor = ref('red');
+const legendColor = ref(layoutThemeColor);
 const predefineColors = ref([
-  '#ff4500',
-  '#ff8c00',
-  '#ffd700',
-  '#90ee90',
-  '#00ced1',
-  '#1e90ff',
-  '#c71585',
-  'rgba(255, 69, 0, 0.68)',
-  'rgb(255, 120, 0)',
-  'hsv(51, 100, 98)',
-  'hsva(120, 40, 94, 0.5)',
-  'hsl(181, 100%, 37%)',
-  'hsla(209, 100%, 56%, 0.73)',
-  '#c7158577',
+    '#ff4500',
+    '#ff8c00',
+    '#ffd700',
+    '#90ee90',
+    '#00ced1',
+    '#1e90ff',
+    '#c71585',
+    'rgba(255, 69, 0, 0.68)',
+    'rgb(255, 120, 0)',
+    'hsv(51, 100, 98)',
+    'hsva(120, 40, 94, 0.5)',
+    'hsl(181, 100%, 37%)',
+    'hsla(209, 100%, 56%, 0.73)',
+    '#c7158577',
 ]);
 
 // 结点类型选项
@@ -341,8 +352,8 @@ const updateImageExceed = (files: File[], uploadFiles: UploadUserFile[]) => {
      * 第一个参数是 files (超出的文件列表)
      * 第二个参数是 fileList (当前已经上传的文件列表)
      */
-     cachedFile.value = files[files.length - 1];
-     previewImage(cachedFile.value);
+    cachedFile.value = files[files.length - 1];
+    previewImage(cachedFile.value);
 };
 
 // 通过拖拽或者点击上传的文件
@@ -444,12 +455,6 @@ const uploadImage = (image: File | string) => {
         flex-direction: column; // 垂直排列
         align-items: center;
         justify-content: center;
-    }
-
-    .input-group {
-        display: flex;
-        gap: 10px;
-        max-width: 300px;
     }
 }
 </style>
