@@ -5,25 +5,22 @@
         <!-- 固定在右下角的按钮组 -->
         <div style="position: fixed; right: 30px; bottom: 10px;">
             <el-tooltip content="重置位置" placement="top">
-                <el-button circle title="重置" size="large" :icon="RefreshRight" @click="resetPosition" style="margin-bottom: 10px;" />
+                <el-button circle title="重置" size="large" :icon="RefreshRight" @click="resetPosition"
+                    style="margin-bottom: 10px;" />
             </el-tooltip>
             <el-tooltip content="添加结点" placement="top">
-                <el-button circle title="添加" size="large" :icon="Plus" @click="openDialog" style="margin-bottom: 10px;" />
+                <el-button circle title="添加" size="large" :icon="Plus" @click="openDialog"
+                    style="margin-bottom: 10px;" />
             </el-tooltip>
             <el-tooltip content="设置" placement="top">
-                <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings" style="margin-bottom: 10px;" />
+                <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings"
+                    style="margin-bottom: 10px;" />
             </el-tooltip>
         </div>
 
         <!-- 可拖动的弹出窗口 -->
-        <el-dialog
-            v-model="dialogVisible"
-            title="添加结点"
-            :draggable="true"
-            width="500px"
-            @close="resetForm"
-        >
-            <div>
+        <el-dialog v-model="dialogVisible" title="添加结点" :draggable="true" width="500px">
+            <div class="dialog-add-node">
                 <!-- 结点名称输入框 -->
                 <el-form :model="nodeForm" label-width="100px">
                     <el-form-item label="结点名称">
@@ -33,36 +30,36 @@
                     <!-- 结点类型下拉选择框或输入框 -->
                     <el-form-item label="结点类型">
                         <el-select v-model="nodeForm.categories" placeholder="请选择结点类型" filterable allow-create>
-                            <el-option
-                                v-for="item in nodeTypes"
-                                :key="item"
-                                :label="item"
-                                :value="item"
-                            ></el-option>
+                            <el-option v-for="item in nodeTypes" :key="item" :label="item" :value="item"></el-option>
                         </el-select>
                     </el-form-item>
 
                     <!-- 结点图片上传 -->
-                    <el-form-item label="结点图片">
-                        <el-upload
-                            class="upload-demo"
-                            action=""
-                            :on-change="handleFileChange"
-                            :show-file-list="false"
-                            :before-upload="beforeUpload"
-                        >
-                            <el-button size="small" type="primary">点击上传图片</el-button>
-                        </el-upload>
-                        <div v-if="nodeForm.image" style="margin-top: 10px;">
-                            <img :src="nodeForm.image" alt="结点图片" style="width: 100px; height: auto;" />
+                    <el-upload 
+                        drag 
+                        class="image-uploader" 
+                        :limit="1" 
+                        :auto-upload="false" 
+                        :show-file-list="false"
+                        :on-change="updateImage"
+                        :on-exceed="updateImageExceed"
+                        :accept="'image/*'"
+                    >
+                        <!-- 图片显示框 -->
+                        <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
+                        <div v-else class="image-preview empty">
+                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                            <div class="el-upload__text">
+                                拖拽图片到此处或 <em>点击上传</em>
+                            </div>
                         </div>
-                    </el-form-item>
+                    </el-upload>
 
-                    <!-- 从网络导入 -->
-                    <el-form-item label="网络图片">
-                        <el-input v-model="nodeForm.imageUrl" placeholder="请输入网络图片地址"></el-input>
-                        <el-button @click="importFromUrl" style="margin-top: 5px;">导入图片</el-button>
-                    </el-form-item>
+                    <!-- 输入框 -->
+                    <div class="input-group">
+                        <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
+                            @paste="handlePaste" />
+                    </div>
                 </el-form>
             </div>
 
@@ -76,11 +73,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount, defineProps, markRaw } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, markRaw } from 'vue';
 import * as echarts from 'echarts';
+import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
-import { ElButton, ElMessage } from 'element-plus';
 
 // 断言结点类型
 interface Node {
@@ -91,113 +88,14 @@ interface Node {
     describe: string;
 };
 
-const resetPosition = () => {
-    // 重置视图到中心
-    if (myChart.value) {
-        // myChart.value.dispatchAction({
-        //     type: 'dataZoom',
-        //     start: 0,
-        //     end: 100,
-        // });
-        myChart.value.dispatchAction({
-            type: 'restore',
-        });
-    }
-};
-
-const openSettings = () => {
-    // 打开设置的逻辑
-    console.log("打开设置")
-};
-
-/**
-<div style="margin-bottom: 10px; z-index: 1; position: relative;">
-    <el-switch v-model="showAvatars" active-text="显示头像" inactive-text="隐藏头像"></el-switch>
-    <el-switch v-model="showNames" active-text="显示名称" inactive-text="隐藏名称"></el-switch>
-    <el-button @click="resetView">回到中心</el-button>
-</div>
-*/
-
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
 
 // 引用图表元素
 const chart = ref<HTMLElement | null>(null);
 
-// 控制是否显示头像和名称
-const showAvatars = ref(true);
-const showNames = ref(true);
-
 // ECharts 实例
 const myChart = ref<echarts.ECharts | null>(null);
-
-/**
- * 后端存储架构 (到时候字段名统一一下嗷)
- * 
- * 还需要一个用户id, 和用户的图id(一个用户可能有多个表) | <-- 摊牌了, 不搞企业级, 不搞该死的分库分表..
- * 
- * 结点表:
- *  |(内键)节点id|用户id(外键)|用户表id(外键)|图例id(外键)|名称|imgUrl|描述|
- *  - 注: 名称附带样式, 这样如果需要什么注音的也可以搞
- * 
- * 结点备注表:
- *  // 本表为灵活的数据增量适配, 因为是mysql而不是芒果db
- *  // 如果前端需要添加而外的项, 则先判断是否有这个项的key, 有则改(覆盖); 否则才插入. 
- *  |唯一自增id|用户id(外键)|用户表id(外键)|结点id(外键)|备注key|备注val|
- * 
- * 边集表:
- *  |(内键)边id|用户id(外键)|用户表id(外键)|fromNodeId|toNodeId|
- * 
- * 图表图例表:
- *  |(内键)图例id|用户id(外键)|用户表id(外键)|图例名称|图例颜色|
- * 
- * 用户图表表:
- *  |(内键)用户表id|用户id(外键)|图表名称|图表图标url|图表内容|
- * 
- * 查询过程:
- *  1. 用户登录并且进入到该图例画面
- *  2. 触发图表查询: 根据用户id, 查询到对应的图id(存储到本地, 前端展示信息), 并且默认打开id最小的图(或者不打开?) (如何防止用户篡改id而查询到其他用户的数据?)
- *  3. 如果打开图, 则触发查找:
- *      1) 根据图id、用户id, 查询到该图所有的图例
- *      2) 根据图id、用户id, 查询该图的所有节点和边 (并且动态加载: 后端一次查询, 分片返回/ 多次查询(分页游标查询), 次次返回)
- *      3) 前端同时构建
- * 
- * 创建与增加过程:
- *  - 创建图表 (创建即可(弹出窗口, 填写标题(必填), 内容, url 可空))
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- *  - 创建图例 (创建即可(弹出窗口, 填写名称(必填), 选择颜色))
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- *  - 添加节点 (选择添加节点所属的图例, 结点名称, 其他可空)
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- *  - 添加边 (是否可以通过左键点击一个节点作为开始, 右键一个节点作为终止, 变成一个有向节点)
- *      | 从而得到 fromNodeId 和 toNodeId
- *      | 前端传输时候配上 用户id 和 图 id 即可
- *      - 是否可以通过py调用爬虫接口实现? 只需要番名即可
- *          - py是否是本地实现对接?
- * 
- * 删除过程:
- *  - 删除结点, 传输结点id
- *      | 前端传输时候配上 用户id 和 图 id 即可
- *      - 还有边集, 也直接从后端`join`删除, 防止前端数据造假
- * 
- * - 删除边, 传输边id
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- * - 删除图例, 需要保证当前图上没有人使用这个图例 (前后端双重验证)
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- * - 删除图表, 先是请确定, 然后是, 要求用户输入密码进行确认 (当且仅当图为空的时候允许直接删除 (推荐用户使用改名))
- *      | 前端传输时候配上 用户id 和 图 id 即可
- * 
- * 修改过程:
- *  - 把添加的修改一下就ok
- * 
- * 备注:
- *  mysql分页游标: https://segmentfault.com/a/1190000042064994
- */
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
@@ -249,17 +147,6 @@ const createNodeData = async () => {
         };
     }));
 }
-
-// const createLegendData = async () => {
-//     return Promise.all(webkitDep.categories.map(async (legend, idx) => {
-//         return {
-//             name: legend.name,
-//             itemStyle: {
-//                 color: legend.color
-//             }
-//         };
-//     }));
-// };
 
 // 在组件挂载后初始化图表
 onMounted(async () => {
@@ -342,8 +229,29 @@ const addNode = async (node: Node) => {
     });
 }
 
+const resetPosition = () => {
+    // 重置视图到中心
+    if (myChart.value) {
+        // myChart.value.dispatchAction({
+        //     type: 'dataZoom',
+        //     start: 0,
+        //     end: 100,
+        // });
+        myChart.value.dispatchAction({
+            type: 'restore',
+        });
+    }
+};
+
+const openSettings = () => {
+    // 打开设置的逻辑
+    console.log("打开设置")
+};
+
+
 // === Begin === 添加结点逻辑 === Begin ===
-const dialogVisible = ref(false);
+const dialogVisible = ref(true);
+
 const nodeForm = ref({
     // 结点名称
     name: "",
@@ -370,7 +278,6 @@ const resetForm = () => {
 // 关闭弹窗
 const closeDialog = () => {
     dialogVisible.value = false;
-    resetForm();
 };
 
 // 确认添加结点
@@ -383,15 +290,36 @@ const confirmAddNode = () => {
     console.log("添加结点数据：", nodeForm.value);
     // http 需要获得结点的唯一id
     closeDialog();
+    resetForm();
 };
 
-// 处理图片文件上传
-const handleFileChange = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        nodeForm.value.image = event.target?.result as string;
-    };
-    // reader.readAsDataURL(file.raw);
+// 输入框输入的图片URL
+const inputUrl = ref('');
+// 显示的图片URL
+const imageUrl = ref<string | ArrayBuffer | null>(null);
+// 缓存的图片文件
+const cachedFile = ref<File | null>(null);
+
+// 更新图片URL
+const updateImageUrl = () => {
+    imageUrl.value = inputUrl.value || null;
+};
+
+// 超过了最大数量
+const updateImageExceed = (files: File[], uploadFiles: UploadUserFile[]) => {
+    /**
+     * 第一个参数是 files (超出的文件列表)
+     * 第二个参数是 fileList (当前已经上传的文件列表)
+     */
+     cachedFile.value = files[files.length - 1];
+     previewImage(cachedFile.value);
+};
+
+// 通过拖拽或者点击上传的文件
+const updateImage = (rawFile: UploadRawFile) => {
+    // 你抽什么风? 明明没有错
+    cachedFile.value = rawFile.raw;
+    previewImage(cachedFile.value);
 };
 
 // 限制文件类型和大小
@@ -407,18 +335,91 @@ const beforeUpload = (file: File) => {
     return isImage && isLt2M;
 };
 
-// 从网络导入图片
-const importFromUrl = () => {
-    if (nodeForm.value.imageUrl) {
-        nodeForm.value.image = nodeForm.value.imageUrl;
-    } else {
-        ElMessage.warning("请输入有效的图片地址");
+// 从粘贴板中获取图片
+const handlePaste = (event: ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (items) {
+        for (let i = 0; i < items.length; ++i) {
+            const item = items[i]
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile()
+                if (file) {
+                    previewImage(file);
+                    cachedFile.value = file;
+                }
+            }
+        }
     }
 };
+
+// 预览图片
+const previewImage = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+        imageUrl.value = reader.result;
+    };
+    reader.onerror = () => {
+        ElMessage.error('图片读取失败');
+    };
+    reader.readAsDataURL(file);
+}
+
+// 确认上传
+const confirmUpload = () => {
+    if (cachedFile.value) {
+        uploadImage(cachedFile.value);
+    } else if (inputUrl.value) {
+        uploadImage(inputUrl.value);
+    } else {
+        ElMessage.warning('请先选择图片或输入图片URL');
+    }
+}
+
+// 上传图片到后端函数
+const uploadImage = (image: File | string) => {
+    // 这里可以实现上传逻辑
+    if (image instanceof File) {
+        // 处理文件上传逻辑
+        console.log('上传文件', image);
+    } else {
+        // 处理 URL 上传逻辑
+        console.log('上传图片URL', image);
+    }
+    ElMessage.success('图片上传成功');
+}
 
 // === End === 添加结点逻辑 === End ===
 
 // 支持可导出: https://echarts.apache.org/zh/api.html#echartsInstance.renderToSVGString
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.dialog-add-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    .image-uploader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .image-preview {
+        width: 400px;
+        height: 150px;
+        display: flex;
+        flex-direction: column; // 垂直排列
+        align-items: center;
+        justify-content: center;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 10px;
+        max-width: 300px;
+    }
+}
+</style>
