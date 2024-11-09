@@ -9,7 +9,7 @@
                     style="margin-bottom: 10px;" />
             </el-tooltip>
             <el-tooltip content="添加结点" placement="top">
-                <el-button circle title="添加" size="large" :icon="Plus" @click="openDialog"
+                <el-button circle title="添加" size="large" :icon="Plus" @click="openAddNodeDialog"
                     style="margin-bottom: 10px;" />
             </el-tooltip>
             <el-tooltip content="设置" placement="top">
@@ -18,8 +18,8 @@
             </el-tooltip>
         </div>
 
-        <!-- 可拖动的弹出窗口 -->
-        <el-dialog v-model="dialogVisible" title="添加结点" :draggable="true" width="550px">
+        <!-- 可拖动的弹出窗口: 添加结点 -->
+        <el-dialog v-model="addNodeDialogVisible" title="添加结点" :draggable="true" width="550px">
             <div class="dialog-add-node">
                 <!-- 结点名称输入框 -->
                 <el-form :model="nodeForm" label-width="80">
@@ -32,7 +32,7 @@
                         <div style="display: flex; align-items: center; width: 100%;">
                             <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
                                 :predefine="predefineColors" />
-                            <el-select v-model="nodeForm.categories" placeholder="请选择结点所属图例" filterable allow-create
+                            <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
                                 @change="categoriesSelectChange">
                                 <el-option v-for="item in nodeLegendList" :key="item" :label="item"
                                     :value="item"></el-option>
@@ -78,8 +78,69 @@
                     @click="ElMessage.warning('高级')">高级</el-button>
 
                 <!-- 取消和确认按钮靠右 -->
-                <el-button @click="closeDialog">取消</el-button>
+                <el-button @click="closeAddNodeDialog">取消</el-button>
                 <el-button type="primary" @click="confirmAddNode">确认</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- 可拖动的弹出窗口: 修改结点 -->
+        <el-dialog v-model="nodeUpDataDialogVisible" title="修改结点" :draggable="true" width="550px" @close="closeNodeUpDataDialog">
+            <div class="dialog-add-node">
+                <!-- 结点名称输入框 -->
+                <el-form :model="nodeForm" label-width="80">
+                    <el-form-item label="结点名称">
+                        <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
+                    </el-form-item>
+
+                    <!-- 结点类型下拉选择框或输入框以及其颜色 -->
+                    <el-form-item label="所属图例">
+                        <div style="display: flex; align-items: center; width: 100%;">
+                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
+                                :predefine="predefineColors" />
+                            <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
+                                @change="categoriesSelectChange">
+                                <el-option v-for="item in nodeLegendList" :key="item" :label="item"
+                                    :value="item"></el-option>
+                            </el-select>
+                        </div>
+                    </el-form-item>
+
+                    <!-- 输入框 -->
+                    <el-form-item label="图片URL">
+                        <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
+                            @paste="handlePaste" />
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
+                            raw-content placement="left">
+                            <!-- 结点图片上传 -->
+                            <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
+                                :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
+                                :accept="'image/*'">
+                                <!-- 图片显示框 -->
+                                <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
+                                <div v-else class="image-preview empty">
+                                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                    <div class="el-upload__text">
+                                        拖拽图片到此处或 <em>点击上传</em>
+                                    </div>
+                                </div>
+                            </el-upload>
+                        </el-tooltip>
+                    </el-form-item>
+
+                    <el-form-item label="结点描述">
+                        <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <!-- 底部按钮组 -->
+            <template #footer>
+                <!-- 取消和确认按钮靠右 -->
+                <el-button @click="closeNodeUpDataDialog">取消</el-button>
+                <el-button type="primary" @click="confirmUpDataNode">确认</el-button>
             </template>
         </el-dialog>
     </div>
@@ -87,6 +148,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount, markRaw } from 'vue';
+import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
 import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
@@ -215,6 +277,46 @@ onMounted(async () => {
                 myChart.value?.resize();
             });
         });
+
+        // 添加事件监听, 控制拖拽行为 (不管用, 摊牌了)
+        // myChart.value.on('mousedown', {dataType: 'node'}, function (params: any) {
+        //     // 判断是否是节点, 并且只允许左键
+        //     if (params.event.event.button !== 0) {
+        //         // 如果按下的不是左键, 取消拖动事件
+        //         ElMessage.info("No!");
+        //         params.preventDefault();
+        //     }
+        // });
+
+        // 鼠标中键 绑定事件
+        myChart.value.on('mousedown', { dataType: 'node' }, function (event: any) {
+            // 判断是否是节点, 并且只允许左键
+            if (event.event.event.button === 1) { // 鼠标中键
+                if (startNodeId && startNodeId === event.data.id) {
+                    // 再次选择自己, 就是取消选择
+                    startNodeId = null;
+                } else {
+                    startNodeId = event.data.id;
+                }
+            }
+        });
+
+        // 鼠标右键 绑定事件
+        myChart.value.on('contextmenu', { dataType: 'node' }, function (event: any) {
+            if (startNodeId) {
+                // 如果已经选择了起始结点, 则设置终点, 连接为边
+                if (startNodeId === event.data.id) {
+                    // 如果这个为自己, 则不行
+                    ElMessage.error("不能以同一个结点为起点和终点");
+                    return;
+                }
+                endNodeId = event.data.id;
+                ElMessage.info("选择终点:" + event.data.id);
+            } else {
+                // 没有选择起点, 就是修改当前结点信息
+                openNodeUpDataDialog(event.data);
+            }
+        });
     }
 });
 
@@ -262,21 +364,21 @@ const openSettings = () => {
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 // 边的起点和终点节点 ID
-let startNodeId: string | null = null;
-let endNodeId: string | null = null;
+let startNodeId: number | null = null;
+let endNodeId: number | null = null;
 
 
 
 // === End === 鼠标事件捕获 === End ===
 
 // === Begin === 添加结点界面逻辑 === Begin ===
-const dialogVisible = ref(false);
+const addNodeDialogVisible = ref(false);
 
 const nodeForm = ref({
     // 结点名称
     name: "",
     // 图例
-    categories: "",
+    category: "",
     // 图片Url
     image: "",       // 本地图片预览
     imageUrl: "",    // 网络图片地址
@@ -306,27 +408,27 @@ const predefineColors = ref([
 // 结点类型选项
 const nodeLegendList = webkitDep.categories.map(it => it.name);
 
-// 选择结点图例时候触发
-const categoriesSelectChange = (name: string) => {
-    const it = webkitDep.categories.find(dict => dict.name === name);
+// 选择结点图例时候触发: 从图例名称选择颜色
+const categoriesSelectChange = (categoriesName: string) => {
+    const it = webkitDep.categories.find(dict => dict.name === categoriesName);
     if (it) {
         legendColor.value = it.color;
     }
 };
 
 // 打开弹窗
-const openDialog = () => {
-    dialogVisible.value = true;
+const openAddNodeDialog = () => {
+    addNodeDialogVisible.value = true;
 };
 
 // 重置表单
-const resetForm = () => {
-    nodeForm.value = { name: "", categories: "", image: "", imageUrl: "", describe: "" };
+const resetAddNodeForm = () => {
+    nodeForm.value = { name: "", category: "", image: "", imageUrl: "", describe: "" };
 };
 
 // 关闭弹窗
-const closeDialog = () => {
-    dialogVisible.value = false;
+const closeAddNodeDialog = () => {
+    addNodeDialogVisible.value = false;
 };
 
 // 测试添加结点
@@ -334,7 +436,7 @@ const _addNodeTest = () => {
     const node: NodeType = {
         id: webkitDep.nodes.length + 1,
         name: nodeForm.value.name,
-        category: nodeForm.value.categories,
+        category: nodeForm.value.category,
         img: nodeForm.value.imageUrl,
         describe: nodeForm.value.describe
     };
@@ -347,7 +449,7 @@ const confirmAddNode = () => {
     if (!nodeForm.value.name) {
         ElMessage.error("结点名称不能为空");
         return;
-    } else if (!nodeForm.value.categories) {
+    } else if (!nodeForm.value.category) {
         ElMessage.error("结点所属图例不能为空");
         return;
     }
@@ -355,8 +457,8 @@ const confirmAddNode = () => {
     console.log("添加结点数据：", nodeForm.value);
     _addNodeTest();
     // http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
-    closeDialog();
-    resetForm();
+    closeAddNodeDialog();
+    resetAddNodeForm();
 };
 
 // 输入框输入的图片URL
@@ -406,9 +508,9 @@ const handlePaste = (event: ClipboardEvent) => {
     const items = event.clipboardData?.items;
     if (items) {
         for (let i = 0; i < items.length; ++i) {
-            const item = items[i]
+            const item = items[i];
             if (item.type.startsWith('image/')) {
-                const file = item.getAsFile()
+                const file = item.getAsFile();
                 if (file) {
                     previewImage(file);
                     cachedFile.value = file;
@@ -431,6 +533,58 @@ const previewImage = (file: File) => {
 };
 
 // === End === 添加结点逻辑 === End ===
+
+// === Begin === 修改结点逻辑 === Begin ===
+/**
+ * 此处只是备份, 以便直接复用
+ */
+const nodeUpDataDialogVisible = ref(false);
+const tmpNodeForm = ref({ name: "", category: "", image: "", imageUrl: "", describe: "", });
+const tmpLegendColor = ref(layoutThemeColor);
+const tmpInputUrl = ref('');
+const tmpImageUrl = ref<string | ArrayBuffer | null>(null);
+const tmpCachedFile = ref<File | null>(null);
+
+// 打开弹窗
+const openNodeUpDataDialog = (node: any) => {
+    nodeUpDataDialogVisible.value = true;
+    // 切换
+    tmpNodeForm.value = cloneDeep(nodeForm.value);
+    tmpLegendColor.value = cloneDeep(legendColor.value);
+    tmpInputUrl.value = cloneDeep(inputUrl.value);
+    tmpImageUrl.value = cloneDeep(imageUrl.value);
+    tmpCachedFile.value = cloneDeep(cachedFile.value);
+    console.log(node);
+    // 赋值
+    nodeForm.value.name = node.name;
+    nodeForm.value.category = node.category;
+    inputUrl.value = ((): string => {
+        console.log(node.symbol);
+        const match = node.symbol.match(/image:\/\/(.+)/);
+        return match ? match[1] : "";
+    })();
+    nodeForm.value.describe = node.describe;
+    categoriesSelectChange(nodeForm.value.category);
+};
+
+// 关闭弹窗
+const closeNodeUpDataDialog = () => {
+    nodeUpDataDialogVisible.value = false;
+    // 切换
+    nodeForm.value = cloneDeep(tmpNodeForm.value);
+    legendColor.value = cloneDeep(tmpLegendColor.value);
+    inputUrl.value = cloneDeep(tmpInputUrl.value);
+    imageUrl.value = cloneDeep(tmpImageUrl.value);
+    cachedFile.value = cloneDeep(tmpCachedFile.value);
+};
+
+// 修改结点
+const confirmUpDataNode = () => {
+    // TODO 同步数据到后端...
+    closeNodeUpDataDialog();
+};
+
+// === End === 修改结点逻辑 === End ===
 
 // 支持可导出: https://echarts.apache.org/zh/api.html#echartsInstance.renderToSVGString
 </script>
