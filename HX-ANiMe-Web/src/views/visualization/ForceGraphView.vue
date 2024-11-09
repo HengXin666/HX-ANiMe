@@ -34,7 +34,7 @@
                                 :predefine="predefineColors" />
                             <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
                                 @change="categoriesSelectChange">
-                                <el-option v-for="item in nodeLegendList" :key="item" :label="item"
+                                <el-option v-for="item in categoriesNameList" :key="item" :label="item"
                                     :value="item"></el-option>
                             </el-select>
                         </div>
@@ -99,7 +99,7 @@
                                 :predefine="predefineColors" />
                             <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
                                 @change="categoriesSelectChange">
-                                <el-option v-for="item in nodeLegendList" :key="item" :label="item"
+                                <el-option v-for="item in categoriesNameList" :key="item" :label="item"
                                     :value="item"></el-option>
                             </el-select>
                         </div>
@@ -314,7 +314,7 @@ onMounted(async () => {
                 ElMessage.info("选择终点:" + event.data.id);
             } else {
                 // 没有选择起点, 就是修改当前结点信息
-                openNodeUpDataDialog(event.data);
+                openNodeUpDataDialog(event.data.id);
             }
         });
     }
@@ -405,8 +405,13 @@ const predefineColors = ref([
     '#c7158577',
 ]);
 
-// 结点类型选项
-const nodeLegendList = webkitDep.categories.map(it => it.name);
+// 图例类型选项
+let categoriesNameList = webkitDep.categories.map(it => it.name);
+
+// 刷新图例类型
+const refreshCategoriesNameList = () => {
+    categoriesNameList = webkitDep.categories.map(it => it.name);
+};
 
 // 选择结点图例时候触发: 从图例名称选择颜色
 const categoriesSelectChange = (categoriesName: string) => {
@@ -418,6 +423,7 @@ const categoriesSelectChange = (categoriesName: string) => {
 
 // 打开弹窗
 const openAddNodeDialog = () => {
+    refreshCategoriesNameList();
     addNodeDialogVisible.value = true;
 };
 
@@ -444,6 +450,37 @@ const _addNodeTest = () => {
     addNode(node);
 };
 
+/**
+ * 修改图例
+ * @param categoryName 图例名称
+ * @param categoryColor 图例颜色
+ */
+const upDataCategory = (categoryName: string, categoryColor: string) => {
+    // 如果找到这个图例, 则不用添加
+    const it = webkitDep.categories.find(it => it.name === categoryName);
+    if (it) {
+        it.color = categoryColor;
+    } else {
+        webkitDep.categories.push({
+            // TODO: 之后id应该是从数据库中获得
+            id: webkitDep.categories.length + 1,
+            name: categoryName,
+            color: categoryColor
+        })
+    }
+    if (myChart.value) {
+        myChart.value.setOption({
+            color: webkitDep.categories.map(it => it.color), // 全局的图例颜色
+            legend: {
+                data: webkitDep.categories.map(it => it.name), // 图例数据
+            },
+            series: [{
+                categories: webkitDep.categories,
+            }],
+        });
+    }
+};
+
 // 确认添加结点
 const confirmAddNode = () => {
     if (!nodeForm.value.name) {
@@ -455,6 +492,9 @@ const confirmAddNode = () => {
     }
     // 在这里可以将数据提交到后端或在图表中添加节点
     console.log("添加结点数据：", nodeForm.value);
+    // 处理图例
+    upDataCategory(nodeForm.value.category, legendColor.value);
+    // 添加结点
     _addNodeTest();
     // http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
     closeAddNodeDialog();
@@ -545,8 +585,12 @@ const tmpInputUrl = ref('');
 const tmpImageUrl = ref<string | ArrayBuffer | null>(null);
 const tmpCachedFile = ref<File | null>(null);
 
+// 当前修改结点的索引
+const nowUpDataNodeIndex = ref(-1);
+
 // 打开弹窗
-const openNodeUpDataDialog = (node: any) => {
+const openNodeUpDataDialog = (nodeId: number) => {
+    refreshCategoriesNameList();
     nodeUpDataDialogVisible.value = true;
     // 切换
     tmpNodeForm.value = cloneDeep(nodeForm.value);
@@ -554,16 +598,20 @@ const openNodeUpDataDialog = (node: any) => {
     tmpInputUrl.value = cloneDeep(inputUrl.value);
     tmpImageUrl.value = cloneDeep(imageUrl.value);
     tmpCachedFile.value = cloneDeep(cachedFile.value);
-    console.log(node);
     // 赋值
-    nodeForm.value.name = node.name;
-    nodeForm.value.category = node.category;
-    inputUrl.value = ((): string => {
-        console.log(node.symbol);
-        const match = node.symbol.match(/image:\/\/(.+)/);
-        return match ? match[1] : "";
-    })();
-    nodeForm.value.describe = node.describe;
+    const index = webkitDep.nodes.findIndex(node => node.id === nodeId);
+    if (index !== -1) {
+        const it = webkitDep.nodes[index];
+        nodeForm.value.name = it.name;
+        nodeForm.value.category = it.category;
+        inputUrl.value = it.img;
+        nodeForm.value.describe = it.describe;
+
+        // 保存当前结点的索引信息
+        nowUpDataNodeIndex.value = index;
+    } else {
+        ElMessage.error("内部错误: 查询不到结点");
+    }
     categoriesSelectChange(nodeForm.value.category);
 };
 
@@ -581,6 +629,14 @@ const closeNodeUpDataDialog = () => {
 // 修改结点
 const confirmUpDataNode = () => {
     // TODO 同步数据到后端...
+    // 如果后端修改成功, 则同步到前端
+    const it = webkitDep.nodes[nowUpDataNodeIndex.value];
+    it.name = cloneDeep(nodeForm.value.name);
+    it.category = cloneDeep(nodeForm.value.category);
+    it.img = cloneDeep(inputUrl.value);
+    it.describe = cloneDeep(nodeForm.value.describe);
+    // 同步图例颜色修改
+
     closeNodeUpDataDialog();
 };
 
