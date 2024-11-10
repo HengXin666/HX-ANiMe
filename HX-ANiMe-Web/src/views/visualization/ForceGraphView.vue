@@ -192,12 +192,14 @@ const categoriesData: Category[] = [
 const nodesData: Node[] = [
     { id: 1, name: 'CV 1', categoryId: 1, category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV' },
     { id: 2, name: 'Anime 1', categoryId: 2, category: 'Anime', img: '', describe: '这个是アニメ' },
-    { id: 3, name: 'Character 1', categoryId: 3, category: 'Character', img: '', describe: '这个是角色' },
+    { id: 3, name: 'Character 1', categoryId: 3, category: 'Character', img: '', describe: '这个是角色1' },
+    { id: 4, name: 'Character 2', categoryId: 3, category: 'Character', img: '', describe: '这个是角色2' },
 ];
 
 const linksData: Link[] = [
     { id: 1, source: '1', target: '2' },
     { id: 2, source: '2', target: '3' },
+    { id: 3, source: '3', target: '4' },
 ];
 
 // 创建 SyncArrayMap 实例
@@ -211,6 +213,15 @@ const webkitDep = {
 };
 
 // === End === 图表数据 === End ===
+
+// === Begin === 添加边逻辑 === Begin ===
+
+// 边的起点和终点节点 ID
+let startNodeId: number | null = null;
+let endNodeId: number | null = null;
+
+
+// === End === 添加边逻辑 === End ===
 
 // 创建节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
@@ -231,7 +242,7 @@ const createNodeData = async () => {
                 normal: {
                     show: null, // showNames.value,
                     formatter: `{b}\n${node.describe}`,
-                    color: webkitDep.categories.getItemById(node.categoryId).color,
+                    color: webkitDep.categories.getItemById(node.categoryId)?.color,
                     position: 'bottom',
                 }
             },
@@ -270,10 +281,18 @@ onMounted(async () => {
                     edges: webkitDep.links.getMapList(), // 边的数据
                     roam: true, // ('scale')只允许缩放
                     edgeSymbol: ['circle', 'arrow'], // 箭头样式
-                    // 连线样式
-                    lineStyle: {
+                    lineStyle: { // 连线样式
                         color: layoutThemeColor,
                         width: 2,
+                        curveness: 0,   // 曲率
+                        opacity: 0.75,  // 不透明度
+                    },
+                    emphasis: {
+                        focus: 'adjacency', // 高亮当前节点及其相邻节点和边
+                        label: {
+                            position: 'right', // 高亮时显示标签的位置
+                            show: true         // 高亮时显示标签
+                        }
                     },
                 },
             ],
@@ -377,16 +396,6 @@ const resetPosition = () => {
 const openSettings = () => {
     console.log("打开设置")
 };
-
-// === Begin === 鼠标事件捕获 === Begin ===
-
-// 边的起点和终点节点 ID
-let startNodeId: number | null = null;
-let endNodeId: number | null = null;
-
-
-
-// === End === 鼠标事件捕获 === End ===
 
 // === Begin === 添加结点界面逻辑 === Begin ===
 const addNodeDialogVisible = ref(false);
