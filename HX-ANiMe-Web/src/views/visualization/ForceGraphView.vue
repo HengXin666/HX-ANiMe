@@ -220,13 +220,12 @@ const webkitDep = {
 let startNodeId: number | null = null;
 let endNodeId: number | null = null;
 
-
 // === End === 添加边逻辑 === End ===
 
-// 创建节点数据
+// 创建力导向图的节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
-const createNodeData = async () => {
+const createForceNodeData = async () => {
     return Promise.all(webkitDep.nodes.getMapList().map(async (node, idx) => {
         return {
             id: node.id,
@@ -240,10 +239,57 @@ const createNodeData = async () => {
             },
             label: {
                 normal: {
-                    show: null, // showNames.value,
-                    formatter: `{b}\n${node.describe}`,
-                    color: webkitDep.categories.getItemById(node.categoryId)?.color,
-                    position: 'bottom',
+                    ...(startNodeId && startNodeId === node.id ? {
+                        show: true,
+                        formatter: `起点`,
+                        color: layoutThemeColor,
+                        fontSize: 18,
+                        position: 'bottom',
+                        fontWeight: 'bold'
+                    } : {
+                        show: null, // false,
+                        formatter: `{b}\n${node.describe}`,
+                        color: webkitDep.categories.getItemById(node.categoryId)?.color,
+                        position: 'bottom',
+                    })
+                }
+            },
+        };
+    }));
+};
+
+// 通过力导向图创建静态图的数据
+const createStaticNodeDataFromForce = async () => {
+    // 获取当前图表的节点坐标
+    const nodeCoordinate = myChart.value?.getModel().getSeriesByIndex(0).getData()._itemLayouts;
+    return Promise.all(webkitDep.nodes.getMapList().map(async (node, idx) => {
+        return {
+            id: node.id,
+            name: node.name,
+            x: nodeCoordinate[idx][0],
+            y: nodeCoordinate[idx][1],
+            category: node.category,
+            // 根据是否存在头像选择符号
+            symbol: node.img !== '' ? 'image://' + node.img : 'circle',
+            symbolSize: [48, 48],
+            itemStyle: {
+                borderWidth: 0,
+            },
+            label: {
+                normal: {
+                    ...(startNodeId && startNodeId === node.id ? {
+                        show: true,
+                        formatter: `起点`,
+                        color: layoutThemeColor,
+                        fontSize: 18,
+                        position: 'bottom',
+                        fontWeight: 'bold'
+                    } : {
+                        show: null, // false,
+                        formatter: `{b}\n${node.describe}`,
+                        color: webkitDep.categories.getItemById(node.categoryId)?.color,
+                        position: 'bottom',
+                    })
                 }
             },
         };
@@ -257,7 +303,7 @@ onMounted(async () => {
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
 
-        const nodeData = await createNodeData(); // 获取节点数据
+        const nodeData = await createForceNodeData(); // 获取节点数据
 
         // 图表配置
         const option = {
@@ -334,8 +380,21 @@ onMounted(async () => {
                     // 再次选择自己, 就是取消选择
                     startNodeId = null;
                 } else {
+                    if (endNodeId) {
+                        ElMessage.warning("请不要在动画时候选择结点");
+                        return;
+                    }
                     startNodeId = event.data.id;
                 }
+                createForceNodeData().then(nodeData => {
+                    if (myChart.value) {
+                        myChart.value.setOption({
+                            series: [{
+                                data: nodeData,
+                            }],
+                        });
+                    }
+                });
             }
         });
 
@@ -349,7 +408,60 @@ onMounted(async () => {
                     return;
                 }
                 endNodeId = event.data.id;
-                ElMessage.info("选择终点:" + event.data.id);
+
+                // 防止重边
+                for (const it of webkitDep.links.getMapList()) {
+                    if (it.source == startNodeId && it.target == endNodeId) {
+                        ElMessage.error("边 [" + startNodeId + "-->" + endNodeId + "] 已存在");
+                        endNodeId = null;
+                        return;
+                    }
+                }
+
+                const linkNode = {
+                    id: webkitDep.links.getMapList().length + 1,
+                    source: startNodeId + '',
+                    target: endNodeId + '',
+                };
+
+                webkitDep.links.push(linkNode);
+
+                // 播放动画: 变为静态图 -> 动画 -> 变回力导向图
+                createStaticNodeDataFromForce().then(nodeData => {
+                    function switchToForceLayout() {
+                        // 重置
+                        startNodeId = null;
+                        endNodeId = null;
+                        createForceNodeData().then(newData => {
+                            myChart.value?.setOption({
+                                series: [{
+                                    type: 'graph',
+                                    layout: 'force',
+                                    data: newData,
+                                    edges: webkitDep.links.getMapList(),
+                                }]
+                            });
+                        });
+                    };
+
+                    myChart.value?.setOption({
+                        series: [{
+                            type: 'graph',
+                            layout: 'none', // 转换为静态布局
+                            data: nodeData, // 使用固定位置的节点
+                            edges: webkitDep.links.getMapList(),
+                        }]
+                    });
+
+                    // 播放连边的动画效果 (只能是非力导向图)
+                    myChart.value?.dispatchAction({
+                        type: 'graphAddLink',
+                        link: linkNode,
+                    });
+
+                    // 手动延迟 1100ms, 因为动画播放固定位 1s
+                    setTimeout(() => switchToForceLayout(), 1100);
+                });
             } else {
                 // 没有选择起点, 就是修改当前结点信息
                 openNodeUpDataDialog(event.data.id);
@@ -361,12 +473,12 @@ onMounted(async () => {
 // 添加新节点
 const addNode = async (node: NodeType) => {
     webkitDep.nodes.push(node);
-    createNodeData().then(nodeData => {
+    createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
                 series: [{
                     data: nodeData,
-                    links: webkitDep.links.getMapList(),
+                    edges: webkitDep.links.getMapList(),
                 }],
             });
         }
@@ -440,8 +552,8 @@ const refreshCategoriesNameList = () => {
 };
 
 // 选择结点图例时候触发: 从图例名称选择颜色
-const categoriesSelectChange = (categoriesId: number) => {
-    const it = webkitDep.categories.getItemById(categoriesId);
+const categoriesSelectChange = (categoriesName: string) => {
+    const it = webkitDep.categories.getMapList().find(dict => dict.name === categoriesName);
     if (it) {
         legendColor.value = it.color;
     }
@@ -494,7 +606,7 @@ const upDataCategory = (categoryName: string, categoryColor: string) => {
             color: categoryColor
         })
     }
-    createNodeData().then(nodeData => {
+    createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
                 color: webkitDep.categories.getMapList().map(it => it.color), // 全局的图例颜色
