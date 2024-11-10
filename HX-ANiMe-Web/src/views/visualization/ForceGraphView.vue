@@ -156,15 +156,6 @@ import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
 
-// 断言结点类型
-interface NodeType {
-    id: number;
-    name: string;
-    category: string;
-    img: string;
-    describe: string;
-};
-
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
 
@@ -176,9 +167,26 @@ const myChart = ref<echarts.ECharts | null>(null);
 
 // === Begin === 图表数据 === Begin ===
 
-type Node = { id: number; name: string; categoryId: number; category: string; img: string; describe: string };
-type Category = { id: number; name: string; color: string };
-type Link = { id: number; source: string; target: string };
+type Node = {
+    id: number;
+    name: string;
+    categoryId: number; 
+    category: string;
+    img: string;
+    describe: string
+};
+
+type Category = {
+    id: number;
+    name: string;
+    color: string
+};
+
+type Link = {
+    id: number;
+    source: string;
+    target: string
+};
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
@@ -471,14 +479,13 @@ onMounted(async () => {
 });
 
 // 添加新节点
-const addNode = async (node: NodeType) => {
+const addNode = async (node: Node) => {
     webkitDep.nodes.push(node);
     createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
                 series: [{
                     data: nodeData,
-                    edges: webkitDep.links.getMapList(),
                 }],
             });
         }
@@ -577,9 +584,10 @@ const closeAddNodeDialog = () => {
 
 // 测试添加结点
 const _addNodeTest = () => {
-    const node: NodeType = {
+    const node: Node = {
         id: webkitDep.nodes.getMapList().length + 1,
         name: nodeForm.value.name,
+        categoryId: (_ => _ ? _ : -1)(webkitDep.categories.getMapList().find(it => it.name === nodeForm.value.category)?.id),
         category: nodeForm.value.category,
         img: nodeForm.value.imageUrl,
         describe: nodeForm.value.describe
