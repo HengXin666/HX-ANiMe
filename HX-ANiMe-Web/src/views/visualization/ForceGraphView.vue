@@ -84,7 +84,8 @@
         </el-dialog>
 
         <!-- 可拖动的弹出窗口: 修改结点 -->
-        <el-dialog v-model="nodeUpDataDialogVisible" title="修改结点" :draggable="true" width="550px" @close="closeNodeUpDataDialog">
+        <el-dialog v-model="nodeUpDataDialogVisible" title="修改结点" :draggable="true" width="550px"
+            @close="closeNodeUpDataDialog">
             <div class="dialog-add-node">
                 <!-- 结点名称输入框 -->
                 <el-form :model="nodeForm" label-width="80">
@@ -194,7 +195,6 @@ const webkitDep = {
     ],
 };
 
-
 // 创建节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
@@ -208,14 +208,13 @@ const createNodeData = async () => {
             symbol: node.img !== '' ? 'image://' + node.img : 'circle',
             symbolSize: [48, 48],
             itemStyle: {
-                borderColor: '#fff',
                 borderWidth: 0,
             },
             label: {
                 normal: {
                     show: null, // showNames.value,
                     formatter: `{b}\n${node.describe}`,
-                    color: '#f9',
+                    color: '#990099',
                     position: 'bottom',
                 }
             },
@@ -468,17 +467,20 @@ const upDataCategory = (categoryName: string, categoryColor: string) => {
             color: categoryColor
         })
     }
-    if (myChart.value) {
-        myChart.value.setOption({
-            color: webkitDep.categories.map(it => it.color), // 全局的图例颜色
-            legend: {
-                data: webkitDep.categories.map(it => it.name), // 图例数据
-            },
-            series: [{
-                categories: webkitDep.categories,
-            }],
-        });
-    }
+    createNodeData().then(nodeData => {
+        if (myChart.value) {
+            myChart.value.setOption({
+                color: webkitDep.categories.map(it => it.color), // 全局的图例颜色
+                legend: {
+                    data: webkitDep.categories.map(it => it.name), // 图例数据
+                },
+                series: [{
+                    data: nodeData,
+                    categories: webkitDep.categories,
+                }]
+            });
+        }
+    });
 };
 
 // 确认添加结点
@@ -636,6 +638,7 @@ const confirmUpDataNode = () => {
     it.img = cloneDeep(inputUrl.value);
     it.describe = cloneDeep(nodeForm.value.describe);
     // 同步图例颜色修改
+    upDataCategory(nodeForm.value.category, legendColor.value);
 
     closeNodeUpDataDialog();
 };
