@@ -153,6 +153,7 @@ import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
 import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
+import { SyncArrayMap } from '@/types/syncArrayMap';
 import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
 
 // 断言结点类型
@@ -173,33 +174,49 @@ const chart = ref<HTMLElement | null>(null);
 // ECharts 实例
 const myChart = ref<echarts.ECharts | null>(null);
 
+// === Begin === 图表数据 === Begin ===
+
+type Node = { id: number; name: string; categoryId: number; category: string; img: string; describe: string };
+type Category = { id: number; name: string; color: string };
+type Link = { id: number; source: string; target: string };
+
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
+const categoriesData: Category[] = [
+    { id: 1, name: 'CV', color: '#990099' },
+    { id: 2, name: 'Anime', color: '#334455' },
+    { id: 3, name: 'Character', color: '#D6B782' },
+];
+
+// TODO: 需要先加载 categoriesData, 然后再加载 nodesData
+const nodesData: Node[] = [
+    { id: 1, name: 'CV 1', categoryId: 1, category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV' },
+    { id: 2, name: 'Anime 1', categoryId: 2, category: 'Anime', img: '', describe: '这个是アニメ' },
+    { id: 3, name: 'Character 1', categoryId: 3, category: 'Character', img: '', describe: '这个是角色' },
+];
+
+const linksData: Link[] = [
+    { id: 1, source: '1', target: '2' },
+    { id: 2, source: '2', target: '3' },
+];
+
+// 创建 SyncArrayMap 实例
 const webkitDep = {
     // 节点数据
-    nodes: [
-        { id: 1, name: 'CV 1', category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV', },
-        { id: 2, name: 'Anime 1', category: 'Anime', img: '', describe: '这个是アニメ', },
-        { id: 3, name: 'Character 1', category: 'Character', img: '', describe: '这个是角色', },
-    ],
+    nodes: new SyncArrayMap(nodesData),
     // 图例
-    categories: [
-        { id: 1, name: 'CV', color: '#990099' },
-        { id: 2, name: 'Anime', color: '#334455' },
-        { id: 3, name: 'Character', color: '#D6B782' },
-    ],
+    categories: new SyncArrayMap(categoriesData),
     // 边集数组
-    links: [
-        { id: 1, source: '1', target: '2' },
-        { id: 2, source: '2', target: '3' },
-    ],
+    links: new SyncArrayMap(linksData)
 };
+
+// === End === 图表数据 === End ===
 
 // 创建节点数据
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
 const createNodeData = async () => {
-    return Promise.all(webkitDep.nodes.map(async (node, idx) => {
+    return Promise.all(webkitDep.nodes.getMapList().map(async (node, idx) => {
         return {
             id: node.id,
             name: node.name,
@@ -214,7 +231,7 @@ const createNodeData = async () => {
                 normal: {
                     show: null, // showNames.value,
                     formatter: `{b}\n${node.describe}`,
-                    color: '#990099',
+                    color: webkitDep.categories.getItemById(node.categoryId).color,
                     position: 'bottom',
                 }
             },
@@ -233,9 +250,9 @@ onMounted(async () => {
 
         // 图表配置
         const option = {
-            color: webkitDep.categories.map(it => it.color), // 图例颜色
+            color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
             legend: {
-                data: webkitDep.categories.map(it => it.name), // 图例数据
+                data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
             },
             series: [
                 {
@@ -244,13 +261,13 @@ onMounted(async () => {
                     animation: true, // 开启动画
                     draggable: true, // 允许拖动节点
                     data: nodeData,  // 指定数据
-                    categories: webkitDep.categories, // 指定分类
+                    categories: webkitDep.categories.getMapList(), // 指定分类
                     force: {
                         edgeLength: [50, 200], // 边的长度
                         repulsion: 100, // 排斥力
                         gravity: 0.025, // 向中心的引力因子
                     },
-                    edges: webkitDep.links, // 边的数据
+                    edges: webkitDep.links.getMapList(), // 边的数据
                     roam: true, // ('scale')只允许缩放
                     edgeSymbol: ['circle', 'arrow'], // 箭头样式
                     // 连线样式
@@ -269,6 +286,9 @@ onMounted(async () => {
         window.addEventListener('resize', () => {
             myChart.value?.resize();
         });
+
+        // 取消浏览器默认右键菜单
+        document.addEventListener('contextmenu', event => event.preventDefault());
 
         // 在组件销毁时移除事件监听器
         onBeforeUnmount(() => {
@@ -327,15 +347,15 @@ const addNode = async (node: NodeType) => {
             myChart.value.setOption({
                 series: [{
                     data: nodeData,
-                    links: webkitDep.links,
+                    links: webkitDep.links.getMapList(),
                 }],
             });
         }
     });
 };
 
+// 重置视图到中心, 并且重置缩放
 const resetPosition = () => {
-    // 重置视图到中心, 并且重置缩放
     if (myChart.value) {
         myChart.value.dispatchAction({
             type: 'dataZoom',
@@ -353,14 +373,12 @@ const resetPosition = () => {
     }
 };
 
+// 打开设置的逻辑
 const openSettings = () => {
-    // 打开设置的逻辑
     console.log("打开设置")
 };
 
 // === Begin === 鼠标事件捕获 === Begin ===
-// 取消浏览器默认右键菜单
-document.addEventListener('contextmenu', event => event.preventDefault());
 
 // 边的起点和终点节点 ID
 let startNodeId: number | null = null;
@@ -405,16 +423,16 @@ const predefineColors = ref([
 ]);
 
 // 图例类型选项
-let categoriesNameList = webkitDep.categories.map(it => it.name);
+let categoriesNameList = webkitDep.categories.getMapList().map(it => it.name);
 
 // 刷新图例类型
 const refreshCategoriesNameList = () => {
-    categoriesNameList = webkitDep.categories.map(it => it.name);
+    categoriesNameList = webkitDep.categories.getMapList().map(it => it.name);
 };
 
 // 选择结点图例时候触发: 从图例名称选择颜色
-const categoriesSelectChange = (categoriesName: string) => {
-    const it = webkitDep.categories.find(dict => dict.name === categoriesName);
+const categoriesSelectChange = (categoriesId: number) => {
+    const it = webkitDep.categories.getItemById(categoriesId);
     if (it) {
         legendColor.value = it.color;
     }
@@ -439,7 +457,7 @@ const closeAddNodeDialog = () => {
 // 测试添加结点
 const _addNodeTest = () => {
     const node: NodeType = {
-        id: webkitDep.nodes.length + 1,
+        id: webkitDep.nodes.getMapList().length + 1,
         name: nodeForm.value.name,
         category: nodeForm.value.category,
         img: nodeForm.value.imageUrl,
@@ -456,13 +474,13 @@ const _addNodeTest = () => {
  */
 const upDataCategory = (categoryName: string, categoryColor: string) => {
     // 如果找到这个图例, 则不用添加
-    const it = webkitDep.categories.find(it => it.name === categoryName);
+    const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
     if (it) {
         it.color = categoryColor;
     } else {
         webkitDep.categories.push({
             // TODO: 之后id应该是从数据库中获得
-            id: webkitDep.categories.length + 1,
+            id: webkitDep.categories.getMapList().length + 1,
             name: categoryName,
             color: categoryColor
         })
@@ -470,13 +488,13 @@ const upDataCategory = (categoryName: string, categoryColor: string) => {
     createNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
-                color: webkitDep.categories.map(it => it.color), // 全局的图例颜色
+                color: webkitDep.categories.getMapList().map(it => it.color), // 全局的图例颜色
                 legend: {
-                    data: webkitDep.categories.map(it => it.name), // 图例数据
+                    data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
                 },
                 series: [{
                     data: nodeData,
-                    categories: webkitDep.categories,
+                    categories: webkitDep.categories.getMapList(),
                 }]
             });
         }
@@ -588,7 +606,7 @@ const tmpImageUrl = ref<string | ArrayBuffer | null>(null);
 const tmpCachedFile = ref<File | null>(null);
 
 // 当前修改结点的索引
-const nowUpDataNodeIndex = ref(-1);
+const nowUpDataNodeId = ref(-1);
 
 // 打开弹窗
 const openNodeUpDataDialog = (nodeId: number) => {
@@ -601,20 +619,19 @@ const openNodeUpDataDialog = (nodeId: number) => {
     tmpImageUrl.value = cloneDeep(imageUrl.value);
     tmpCachedFile.value = cloneDeep(cachedFile.value);
     // 赋值
-    const index = webkitDep.nodes.findIndex(node => node.id === nodeId);
-    if (index !== -1) {
-        const it = webkitDep.nodes[index];
+    const it = webkitDep.nodes.getItemById(nodeId);
+    if (it) {
         nodeForm.value.name = it.name;
         nodeForm.value.category = it.category;
         inputUrl.value = it.img;
         nodeForm.value.describe = it.describe;
 
         // 保存当前结点的索引信息
-        nowUpDataNodeIndex.value = index;
+        nowUpDataNodeId.value = nodeId;
+        categoriesSelectChange(it.categoryId);
     } else {
         ElMessage.error("内部错误: 查询不到结点");
     }
-    categoriesSelectChange(nodeForm.value.category);
 };
 
 // 关闭弹窗
@@ -632,13 +649,15 @@ const closeNodeUpDataDialog = () => {
 const confirmUpDataNode = () => {
     // TODO 同步数据到后端...
     // 如果后端修改成功, 则同步到前端
-    const it = webkitDep.nodes[nowUpDataNodeIndex.value];
-    it.name = cloneDeep(nodeForm.value.name);
-    it.category = cloneDeep(nodeForm.value.category);
-    it.img = cloneDeep(inputUrl.value);
-    it.describe = cloneDeep(nodeForm.value.describe);
-    // 同步图例颜色修改
-    upDataCategory(nodeForm.value.category, legendColor.value);
+    const it = webkitDep.nodes.getItemById(nowUpDataNodeId.value);
+    if (it) {
+        it.name = cloneDeep(nodeForm.value.name);
+        it.category = cloneDeep(nodeForm.value.category);
+        it.img = cloneDeep(inputUrl.value);
+        it.describe = cloneDeep(nodeForm.value.describe);
+        // 同步图例颜色修改
+        upDataCategory(nodeForm.value.category, legendColor.value);
+    }
 
     closeNodeUpDataDialog();
 };
