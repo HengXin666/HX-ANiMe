@@ -155,6 +155,7 @@ import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
+import { toHtml } from '@/utils/toHtml';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -241,27 +242,35 @@ const createForceNodeData = async () => {
             category: node.category,
             // 根据是否存在头像选择符号
             symbol: node.img !== '' ? 'image://' + node.img : 'circle',
-            symbolSize: [48, 48],
-            itemStyle: {
-                borderWidth: 0,
-            },
-            label: {
-                normal: {
-                    ...(startNodeId && startNodeId === node.id ? {
+            ...(startNodeId && startNodeId === node.id ? { // 被选中
+                symbolSize: [48, 48],
+                itemStyle: {
+                    borderColor: '#ff0000',  // 节点边框颜色
+                    borderWidth: 2,          // 节点边框宽度
+                    shadowBlur: 32,          // 阴影模糊半径, 数值越大越向外扩散
+                    shadowColor: '#ff0000'   // 阴影颜色, 与边框颜色相同
+                },
+                label: {
+                    normal: {
                         show: true,
                         formatter: `起点`,
-                        color: layoutThemeColor,
+                        color: '#ff0000',
                         fontSize: 18,
                         position: 'bottom',
-                        fontWeight: 'bold'
-                    } : {
-                        show: null, // false,
+                        fontWeight: 'bold',
+                    }
+                }
+            } : { // 原生
+                symbolSize: [48, 48],
+                label: {
+                    normal: {
+                        // show: false,
                         formatter: `{b}\n${node.describe}`,
                         color: webkitDep.categories.getItemById(node.categoryId)?.color,
                         position: 'bottom',
-                    })
+                    }
                 }
-            },
+            }),
         };
     }));
 };
@@ -279,27 +288,35 @@ const createStaticNodeDataFromForce = async () => {
             category: node.category,
             // 根据是否存在头像选择符号
             symbol: node.img !== '' ? 'image://' + node.img : 'circle',
-            symbolSize: [48, 48],
-            itemStyle: {
-                borderWidth: 0,
-            },
-            label: {
-                normal: {
-                    ...(startNodeId && startNodeId === node.id ? {
+            ...(startNodeId && startNodeId === node.id ? { // 被选中
+                symbolSize: [48, 48],
+                itemStyle: {
+                    borderColor: '#ff0000',  // 节点边框颜色
+                    borderWidth: 2,          // 节点边框宽度
+                    shadowBlur: 32,          // 阴影模糊半径, 数值越大越向外扩散
+                    shadowColor: '#ff0000'   // 阴影颜色, 与边框颜色相同
+                },
+                label: {
+                    normal: {
                         show: true,
                         formatter: `起点`,
-                        color: layoutThemeColor,
+                        color: '#ff0000',
                         fontSize: 18,
                         position: 'bottom',
-                        fontWeight: 'bold'
-                    } : {
-                        show: null, // false,
+                        fontWeight: 'bold',
+                    }
+                }
+            } : { // 原生
+                symbolSize: [48, 48],
+                label: {
+                    normal: {
+                        // show: false,
                         formatter: `{b}\n${node.describe}`,
                         color: webkitDep.categories.getItemById(node.categoryId)?.color,
                         position: 'bottom',
-                    })
+                    }
                 }
-            },
+            }),
         };
     }));
 };
@@ -318,6 +335,25 @@ onMounted(async () => {
             color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
             legend: {
                 data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
+            },
+            // 提示框组件
+            tooltip: {
+                trigger: "item",
+                // 这里支持html! (使用函数就不支持 {b} 格式化了)
+                formatter: (params: any) => {
+                    if (params.dataType === "node") {
+                        return params.data.id + "<br/>";
+                    } else if (params.dataType === "edge") {
+                        return params.data.source + " --> " + params.data.target;
+                    } else {
+                        return "不支持显示";
+                    }
+                },
+                // 提示框浮层的背景颜色
+                backgroundColor: "rgba(50, 50, 50, 0.5)",
+                // 提示框浮层的边框颜色
+                borderColor: layoutThemeColor,
+                borderWidth: 1,
             },
             series: [
                 {
@@ -341,13 +377,24 @@ onMounted(async () => {
                         curveness: 0,   // 曲率
                         opacity: 0.75,  // 不透明度
                     },
-                    emphasis: {
-                        focus: 'adjacency', // 高亮当前节点及其相邻节点和边
-                        label: {
-                            position: 'right', // 高亮时显示标签的位置
-                            show: true         // 高亮时显示标签
-                        }
+                    label: {
+                        show: false, // 默认隐藏标签
+                        
                     },
+                    focusNodeAdjacency: true,
+                    // 连线样式
+                    edgeLabel: {
+                        normal: {
+                            show: true,
+                            textStyle: {
+                                color: layoutThemeColor,
+                                fontSize: 14,
+                            },
+                            formatter: function(param: any) { // 标签内容
+                                return webkitDep.nodes.getItemById(param.data.target)?.category;
+                            }
+                        }
+                    }
                 },
             ],
         };
