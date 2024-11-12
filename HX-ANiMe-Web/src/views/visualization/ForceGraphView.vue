@@ -379,9 +379,15 @@ onMounted(async () => {
                     },
                     label: {
                         show: false, // 默认隐藏标签
-                        
                     },
-                    focusNodeAdjacency: true,
+                    // 问题: 依旧无法显示: 连接附近的结点的标签 (只能手写了事件吗, 每一次O(n^2))
+                    emphasis: {
+                        focus: 'adjacency', // 高亮当前节点及其相邻节点和边
+                        label: {
+                            position: 'right', // 高亮时显示标签的位置
+                            show: true         // 高亮时显示标签
+                        }
+                    },
                     // 连线样式
                     edgeLabel: {
                         normal: {
@@ -483,7 +489,7 @@ onMounted(async () => {
 
                 // 播放动画: 变为静态图 -> 动画 -> 变回力导向图
                 createStaticNodeDataFromForce().then(nodeData => {
-                    function switchToForceLayout() {
+                    function switchToForceLayout(zoomLevel: number) {
                         // 重置
                         startNodeId = null;
                         endNodeId = null;
@@ -494,16 +500,20 @@ onMounted(async () => {
                                     layout: 'force',
                                     data: newData,
                                     edges: webkitDep.links.getMapList(),
+                                    zoom: zoomLevel,
                                 }]
                             });
                         });
                     };
+
+                    const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
 
                     myChart.value?.setOption({
                         series: [{
                             type: 'graph',
                             layout: 'none', // 转换为静态布局
                             data: nodeData, // 使用固定位置的节点
+                            zoom: zoomLevel * 0.24, // TODO 此处的 k 可能和力导向公式有关...
                             edges: webkitDep.links.getMapList(),
                         }]
                     });
@@ -515,7 +525,7 @@ onMounted(async () => {
                     });
 
                     // 手动延迟 1100ms, 因为动画播放固定位 1s
-                    setTimeout(() => switchToForceLayout(), 1100);
+                    setTimeout(() => switchToForceLayout(zoomLevel), 1100);
                 });
             } else {
                 // 没有选择起点, 就是修改当前结点信息
