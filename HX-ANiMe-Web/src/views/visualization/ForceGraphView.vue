@@ -20,7 +20,20 @@
 
         <!-- 可拖动的弹出窗口: 添加结点 -->
         <el-dialog v-model="addNodeDialogVisible" title="添加结点" :draggable="true" width="550px">
-            <div class="dialog-add-node">
+            <div v-if="addNodeAdvancedOptions" class="dialog-add-node">
+                <el-form-item label="Secret API Key">
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <el-input
+                            v-model="apiKey"
+                            readonly
+                            style="margin-right: 10px;"
+                        />
+                        <el-icon @click="copyApiKey" style="right: 35px;"><DocumentCopy /></el-icon>
+                        <el-button @click="fetchApiKey">获取</el-button>
+                    </div>
+                </el-form-item>
+            </div>
+            <div v-else class="dialog-add-node">
                 <!-- 结点名称输入框 -->
                 <el-form :model="nodeForm" label-width="80">
                     <el-form-item label="结点名称">
@@ -75,7 +88,7 @@
             <template #footer>
                 <!-- 高级按钮靠左并带有图标 -->
                 <el-button style="float: left; color: #409EFF; font-weight: bold;"
-                    @click="ElMessage.warning('高级')">高级</el-button>
+                    @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{addNodeAdvancedOptions ? "简单添加" : "高级选项"}}</el-button>
 
                 <!-- 取消和确认按钮靠右 -->
                 <el-button @click="closeAddNodeDialog">取消</el-button>
@@ -154,8 +167,7 @@ import * as echarts from 'echarts';
 import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
-import { RefreshRight, Plus, Setting } from '@element-plus/icons-vue';
-import { toHtml } from '@/utils/toHtml';
+import { RefreshRight, Plus, Setting, DocumentCopy } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -574,7 +586,33 @@ const openSettings = () => {
 };
 
 // === Begin === 添加结点界面逻辑 === Begin ===
+// 是否显示添加结点界面
 const addNodeDialogVisible = ref(false);
+
+// === Begin === 高级选项界面逻辑 === Begin ===
+// 是否处于高级选项界面
+const addNodeAdvancedOptions = ref(false);
+const apiKey = ref<string>(''); // 定义 API Key，初始为空
+
+// 获取 API Key 的函数
+const fetchApiKey = () => {
+    // TODO 在这里可以调用接口获取 API Key
+    apiKey.value = "your-secret-api-key"; // 模拟赋值
+};
+
+// 复制 API Key 到剪贴板
+const copyApiKey = () => {
+    if (apiKey.value !== "") {
+        navigator.clipboard.writeText(apiKey.value).then(() => {
+            ElMessage.success("已复制API Key到剪贴板");
+        }).catch(() => {
+            ElMessage.error("复制失败");
+        });
+    } else {
+        ElMessage.warning("请先获取API Key");
+    }
+};
+// === End === 高级选项界面逻辑 === End ===
 
 const nodeForm = ref({
     // 结点名称
