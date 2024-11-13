@@ -52,6 +52,19 @@ export class SyncArrayMap {
         }
     }
 
+    // 通过字典列表的索引删除数据 O(1)
+    public removeItemByIndex(index: number, id: number): void {
+        const item = this._mapList[index];
+    
+        if (item && item.id === id) {
+            // 删除元素
+            this._mapList.splice(index, 1);
+            delete this._dataMap[id];
+        } else {
+            throw new Error("No item found at the given index or ID mismatch.");
+        }
+    }
+
     // 通过id查找元素, 如果查找不到则返回`null`
     public getItemById(id: number): T | null {
         return id in this._dataMap ? this._dataMap[id] : null;

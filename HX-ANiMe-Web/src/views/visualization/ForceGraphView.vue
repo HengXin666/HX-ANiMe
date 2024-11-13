@@ -23,12 +23,10 @@
             <div v-if="addNodeAdvancedOptions" class="dialog-add-node">
                 <el-form-item label="Secret API Key">
                     <div style="display: flex; align-items: center; width: 100%;">
-                        <el-input
-                            v-model="apiKey"
-                            readonly
-                            style="margin-right: 10px;"
-                        />
-                        <el-icon @click="copyApiKey" style="right: 35px;"><DocumentCopy /></el-icon>
+                        <el-input v-model="apiKey" readonly style="margin-right: 10px;" />
+                        <el-icon @click="copyApiKey" style="right: 35px;">
+                            <DocumentCopy />
+                        </el-icon>
                         <el-button @click="fetchApiKey">获取</el-button>
                     </div>
                 </el-form-item>
@@ -88,7 +86,8 @@
             <template #footer>
                 <!-- 高级按钮靠左并带有图标 -->
                 <el-button style="float: left; color: #409EFF; font-weight: bold;"
-                    @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{addNodeAdvancedOptions ? "简单添加" : "高级选项"}}</el-button>
+                    @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{ addNodeAdvancedOptions ? "简单添加" :
+                    "高级选项"}}</el-button>
 
                 <!-- 取消和确认按钮靠右 -->
                 <el-button @click="closeAddNodeDialog">取消</el-button>
@@ -152,6 +151,9 @@
 
             <!-- 底部按钮组 -->
             <template #footer>
+                <!-- 删除结点按钮 -->
+                <el-button style="float: left; color: red; font-weight: bold;" @click="removeNodeLogic">删除结点</el-button>
+
                 <!-- 取消和确认按钮靠右 -->
                 <el-button @click="closeNodeUpDataDialog">取消</el-button>
                 <el-button type="primary" @click="confirmUpDataNode">确认</el-button>
@@ -161,10 +163,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount, markRaw } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount, markRaw, h } from 'vue';
 import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
-import { ElButton, ElMessage, UploadRawFile, UploadUserFile } from 'element-plus';
+import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import { RefreshRight, Plus, Setting, DocumentCopy } from '@element-plus/icons-vue';
@@ -183,7 +185,7 @@ const myChart = ref<echarts.ECharts | null>(null);
 type Node = {
     id: number;
     name: string;
-    categoryId: number; 
+    categoryId: number;
     category: string;
     img: string;
     describe: string
@@ -408,7 +410,7 @@ onMounted(async () => {
                                 color: layoutThemeColor,
                                 fontSize: 14,
                             },
-                            formatter: function(param: any) { // 标签内容
+                            formatter: function (param: any) { // 标签内容
                                 return webkitDep.nodes.getItemById(param.data.target)?.category;
                             }
                         }
@@ -501,7 +503,7 @@ onMounted(async () => {
 
                 // 播放动画: 变为静态图 -> 动画 -> 变回力导向图
                 createStaticNodeDataFromForce().then(nodeData => {
-                    function switchToForceLayout(zoomLevel: number) {
+                    function switchToForceLayout (zoomLevel: number) {
                         // 重置
                         startNodeId = null;
                         endNodeId = null;
@@ -884,6 +886,81 @@ const confirmUpDataNode = () => {
     }
 
     closeNodeUpDataDialog();
+};
+
+// 异步删除结点api
+const removeNode = async (nodeId: number) => {
+    // 此处仅删除结点对结点和边集进行更新 (图例不删)
+    // TODO 让后端更新, 前端再同步结果
+    if (true) {
+        // 删除结点
+        webkitDep.nodes.removeItem(nodeId);
+
+        // 删除边
+        let arr: [number, number][] = [];
+        webkitDep.links.getMapList().forEach(
+            (it, idx) => {
+                if (it.source === nodeId || it.target === nodeId) {
+                    arr.push([idx, it.id]);
+                }
+            }
+        );
+        for (const [index, id] of arr) {
+            webkitDep.links.removeItemByIndex(index, id);
+        }
+    } else {
+        throw new Error('WIFI is not good');
+    }
+};
+
+// 删除结点逻辑
+const removeNodeLogic = () => {
+    ElMessageBox({
+        title: '确实删除结点',
+        message: h('p', null, [
+            h('span', null, '您真的要删除结点: '),
+            h('span', { style: 'color: ' + layoutThemeColor }, webkitDep.nodes.getItemById(nowUpDataNodeId.value)?.name),
+            h('b', { style: 'color: red' }, " ( id = " + webkitDep.nodes.getItemById(nowUpDataNodeId.value)?.id + " )"),
+            h('span', null, ' 吗?'),
+        ]),
+        showCancelButton: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'info',
+        beforeClose: (action, instance, done) => {
+            if (action === 'confirm') {
+                instance.confirmButtonLoading = true;
+                instance.confirmButtonText = '正在删除...';
+                // 假设这里你调用了某个 API 来删除节点
+                removeNode(nowUpDataNodeId.value).then(() => {
+                    // 假设删除成功, 关闭弹框
+                    done();
+                    ElMessage.success('删除成功');
+                    closeNodeUpDataDialog();
+                    // 播放删除动画
+                    createForceNodeData().then(newData => {
+                        myChart.value?.setOption({
+                            series: [{
+                                type: 'graph',
+                                data: newData,
+                                edges: webkitDep.links.getMapList(),
+                            }]
+                        });
+                    });
+                }).catch(() => {
+                    // 如果删除失败, 显示错误信息并不关闭弹框
+                    done();
+                    ElMessage.error('网络错误，删除失败');
+                }).finally(() => {
+                    // 不管成功还是失败, 停止加载状态
+                    instance.confirmButtonLoading = false;
+                });
+            } else {
+                done();
+            }
+        },
+    });
+    // .then((action: any) => {});
 };
 
 // === End === 修改结点逻辑 === End ===
