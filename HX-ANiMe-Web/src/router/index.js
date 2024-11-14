@@ -42,8 +42,11 @@ const router = createRouter({
 // 添加一个路由的全局前置守卫
 router.beforeEach(async function (to, from, next) {
     // 判断是否是登录页面
-    ElMessage.info("看看界面");
-    next();
+
+    // TODO 测试使用
+    // ElMessage.info("看看界面");
+    // next();
+    
     if (
         to.name === "Login" ||
         to.name === "NotFound" ||
