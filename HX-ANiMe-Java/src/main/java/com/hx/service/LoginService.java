@@ -46,12 +46,11 @@ public class LoginService {
     }
 
     /**
-     * @description: 注册用户
-     * @author: Heng_Xin 
-     * @date: 2024/11/1 10:33 
-     * @param: username
-     * @param: password
-     * @return: String token
+     * @description: 添加用户
+     * @author: Heng_Xin
+     * @date: 2024/11/14 17:17
+     * @param: requestDTO
+     * @return: String
      **/
     public String addUser(@RequestBody UserRegisterRequestDTO requestDTO) {
         BaseUserDO baseUserDO = new BaseUserDO();
@@ -62,9 +61,10 @@ public class LoginService {
         baseUserDO.setNickname(requestDTO.getUserName());
         // 创建时间
         baseUserDO.setCreTime(LocalDateTime.now());
-        if (!loginDAO.insertUser(baseUserDO)) // 注册失败
+        Long userId = loginDAO.insertUser(baseUserDO);
+        if (userId == null) // 注册失败
             return null;
-        return JWTUtils.generateToken(baseUserDO.getUserName());
+        return JWTUtils.generateToken(userId, baseUserDO.getUserName());
     }
 
     public String logout() {
@@ -80,8 +80,11 @@ public class LoginService {
      **/
     public String updateToken(@RequestBody JwtTokenDTO requestDTO) {
         // 验证token是否合法
-        if (!JWTUtils.validateToken(requestDTO.getToken(), requestDTO.getUserName()))
+        if (!JWTUtils.validateToken(requestDTO.getToken()))
             return null;
-        return JWTUtils.generateToken(requestDTO.getUserName()); // 生成新token
+        return JWTUtils.generateToken(
+            JWTUtils.extractId(requestDTO.getToken()),
+            requestDTO.getUserName()
+        ); // 生成新token
     }
 }

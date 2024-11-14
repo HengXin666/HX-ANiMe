@@ -5,10 +5,12 @@ import { ElMessage } from "element-plus";
 import { useUserStore } from "../stores/useUserStore";
 
 // 配置axios基本属性
+// @ts-ignore
 http.defaults.baseURL = import.meta.env.VITE_API_URL;
 http.defaults.timeout = 10000;
 
 // 数据上传数据类型
+// @ts-ignore
 http.upType = {
 	// 表单类型
 	form: 0,
@@ -21,6 +23,7 @@ http.upType = {
 };
 
 // HTTP状态码
+// @ts-ignore
 http.httpcode = {
 	// 暂未登录或TOKEN已经过期
 	UNAUTHORIZED: 401,
@@ -61,14 +64,20 @@ export default (router) => {
 			// 提交的时候携带登录凭证
 			let store = useUserStore();
 			let token = store.getToken;
+			if (!config.headers.common) {
+				config.headers.common = {}; // 确保 common 被初始化
+			}
 			if (token) {
 				config.headers.common.Authorization = `Bearer ${token}`;
 			}
 			// 处理提交方式参数序列化操作
+			// @ts-ignore
 			if (config.upType === http.upType.json) {
 				config.headers["Content-Type"] = "application/json;charset=UTF-8";
+			// @ts-ignore
 			} else if (config.upType === http.upType.file) {
 				config.headers["Content-Type"] = "multipart/form-data";
+			// @ts-ignore
 			} else if (config.upType === http.upType.stream) {
 				config.headers["Content-Type"] = "application/octet-stream";
 			} else {
@@ -80,6 +89,7 @@ export default (router) => {
 			return config;
 		},
 		(error) => {
+			// @ts-ignore
 			return Promise.error(error);
 		},
 	);
@@ -93,14 +103,17 @@ export default (router) => {
 					let store = useUserStore();
 					const data = response.data;
 					switch (data.code) {
+						// @ts-ignore
 						case http.httpcode.SUCCESS:
 							// 将数据继续传递下去
 							return Promise.resolve(data);
+						// @ts-ignore
 						case http.httpcode.FORBIDDEN:
 							// 权限不足
 							ElMessage.error("权限不够，请联系管理员");
 							// 将数据继续传递下去
 							return Promise.reject(data);
+						// @ts-ignore
 						case http.httpcode.UNAUTHORIZED:
 							// 判断是否是超时
 							if (typeof data.data === "string" && data.data.includes("Jwt expired at")) {
@@ -118,10 +131,13 @@ export default (router) => {
 							}
 							// 将数据继续传递下去
 							return Promise.reject(data);
+						// @ts-ignore
 						case http.httpcode.NOT_FOUND:
 							ElMessage.warning(data.message || "404访问页面不存在");
 							return Promise.reject(data);
+						// @ts-ignore
 						case http.httpcode.CONTENT_TYPE_ERR:
+						// @ts-ignore
 						case http.httpcode.PARAMS_INVALID:
 							ElMessage.warning(data.message || "请求参数或请求头错误");
 							return Promise.reject(response);

@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * @BelongsProject: HXANiMeWeb
@@ -69,27 +71,39 @@ public class LoginDAO {
      * @author: Heng_Xin
      * @date: 2024/11/1 10:46
      * @param: baseUserDO
-     * @return: Boolean 是否添加成功
+     * @return: Long 成功则返回用户ID, 失败则返回null
      **/
-    public Boolean insertUser(BaseUserDO baseUserDO) {
-        String sql = "INSERT INTO base_user (user_name, nickname, email, password, salt, avatar, last_login_time, cre_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public Long insertUser(BaseUserDO baseUserDO) {
+        // 插入 SQL 语句
+        String sql = "INSERT INTO base_user (user_name, nickname, email, password, salt, avatar, last_login_time, cre_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
         try {
-            int rowsAffected = jdbcTemplate.update(
-                    sql,
-                    baseUserDO.getUserName(),
-                    baseUserDO.getNickname(),
-                    baseUserDO.getEmail(),
-                    baseUserDO.getPassword(),
-                    baseUserDO.getSalt(),
-                    baseUserDO.getAvatar(),
-                    baseUserDO.getLastLoginTime(),
-                    baseUserDO.getCreTime()
-            );
-            return rowsAffected > 0;
+            // 创建 KeyHolder 来接收生成的主键
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            // 使用 PreparedStatementCreator 来执行插入操作并返回主键
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                @Override
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});  // "id" 是主键的列名
+                    ps.setString(1, baseUserDO.getUserName());
+                    ps.setString(2, baseUserDO.getNickname());
+                    ps.setString(3, baseUserDO.getEmail());
+                    ps.setString(4, baseUserDO.getPassword());
+                    ps.setString(5, baseUserDO.getSalt());
+                    ps.setString(6, baseUserDO.getAvatar());
+                    ps.setTimestamp(7, Timestamp.valueOf(baseUserDO.getLastLoginTime()));
+                    ps.setTimestamp(8, Timestamp.valueOf(baseUserDO.getCreTime()));
+                    return ps;
+                }
+            }, keyHolder);
+
+            // 获取生成的主键 ID
+            return keyHolder.getKey().longValue();  // 返回生成的用户ID
         } catch (DataAccessException e) {
-            // 处理数据访问异常
             log.info("Data access error: " + e.getMessage());
-            return false; // 返回false表示添加失败
+            return null;  // 发生异常时返回 null
         }
     }
 }

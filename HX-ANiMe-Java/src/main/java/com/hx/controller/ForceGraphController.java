@@ -25,6 +25,7 @@ public class ForceGraphController {
      **/
     @RequestMapping("/get-nodes")
     public String getNodes() {
-        return "{\"nodes\":[{\"id\":\"node1\"},{\"id\":\"node2\"},{\"id\":\"node3\"}],\"links\":[{\"source\":\"node1\",\"target\":\"node2\"},{\"source\":\"node2\",\"target\":\"node3\"}]}";
+        return "";
     }
+
 }

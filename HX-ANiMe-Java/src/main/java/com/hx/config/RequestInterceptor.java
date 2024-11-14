@@ -1,5 +1,6 @@
 package com.hx.config;
 
+import com.hx.utils.JWTUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -24,54 +25,43 @@ public class RequestInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(
-        HttpServletRequest httpServletRequest,
-        HttpServletResponse httpServletResponse,
+        HttpServletRequest request,
+        HttpServletResponse response,
         Object o
     ) throws Exception {
-        //将头部信息都转换成map
-        JSONObject map = new JSONObject();
-        Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String key = headerNames.nextElement();
-            String value = httpServletRequest.getHeader(key);
-            map.put(key, value);
-        }
-        map.put("token", httpServletRequest.getHeader("AUTH-TOKEN"));
-        //判断从前端传来的头部信息中AUTH-TOKEN的值是否与我们后台定义的token值一致
-        if("111".equals(map.get("token"))){
-            //token正确 继续下一步拦截器(如果有)
-            System.out.println("token is right");
-            //从Spring上下文中拿到UserMapper
-            UserMapper userMapper= ApplicationContextUtil.getBean(UserMapper.class);
-            //获取该token对应的用户信息
-            User user=userMapper.getUserByToken(String.valueOf(map.get("token")));
-            //将用户信息放入Request中
-            httpServletRequest.setAttribute("test",JSON.toJSONString(user));
-            return true;
-        }else{
-            //token错误 返回错误response
-            System.out.println("token is error");
-            PrintWriter writer = null;
-            try {
-                ResponseDto dto=new ResponseDto();
-                dto.setErrorCode(1002);
-                dto.setMessage("RequestInterceptor");
-                httpServletResponse.setCharacterEncoding("utf-8");
-                httpServletResponse.setHeader("Content-Type","application/json");
-                writer = httpServletResponse.getWriter();
-                //将返回的错误提示压入流中
-                writer.write(JSON.toJSONString(dto));
-                writer.flush();
-            } catch (Exception e) {
+        // 从请求头中获取 Authorization 字段
+        String authorizationHeader = request.getHeader("Authorization");
 
-            } finally {
-                if (null != writer) {
-                    writer.close();
-                }
+        // 判断是否存在 Bearer Token
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            // 截取 Bearer 后面的部分，获取 Token
+            String token = authorizationHeader.substring(7);
+            if (!JWTUtils.validateToken(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
                 return false;
             }
+            try {
+                // 解析 Token，提取 id 和 name
+                Long id = JWTUtils.extractId(token);
+                String name = JWTUtils.extractName(token);
+
+                // 将 id 和 name 放入请求属性中，供后续处理使用
+                request.setAttribute("userId", id);
+                request.setAttribute("userName", name);
+
+            } catch (Exception e) {
+                // 如果解析 Token 失败，可以返回错误信息，或者设置相应的状态码
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized
+                return false;
+            }
+        } else {
+            // 如果没有 Authorization 头，返回错误信息或状态码
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
         }
 
+        // 如果 token 解析成功，放行请求
+        return true;
     }
 
     /**

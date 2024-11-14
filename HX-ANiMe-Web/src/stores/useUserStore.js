@@ -27,23 +27,9 @@ export const useUserStore = defineStore("user", {
 	actions: {
 		// 加载用户
 		async loadUser() {
-			// 发送获取当前用户信息请求
-			let data = await Request.requestForm(Request.GET, "/login/current-user", null);
-			this.user = data.data;
-		},
-		// 加载菜单
-		async loadMenus() {
-			// TODO[TEST_CODE]:此处写测试数据设定
-			// 测试基础数据菜单板块
-			// this.menus = testMenus;
-
-			// 发送获取菜单请求
-			// let data = await Request.requestForm(
-			//   Request.GET,
-			//   '/login/get-menus',
-			//   null
-			// )
-			// this.menus = data.data
+			// 发送获取当前用户信息请求 当前用户id 用 token吧
+			// let data = await Request.requestForm(Request.GET, "/login/current-user", null);
+			// this.user = data.data;
 		},
 		// 加载刷新凭证
 		loadRefreshToken() {

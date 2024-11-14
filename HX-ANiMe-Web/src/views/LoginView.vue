@@ -72,7 +72,7 @@ import { useRouter } from "vue-router";
 const $router = useRouter();
 
 // 控制显示为登录还是注册
-const active = ref(1)
+const active = ref(1);
 
 // 定义登录数据对象
 const loginData = reactive({
@@ -149,7 +149,7 @@ const doLogin = (code) => {
             // ElMessage.error("账号或密码错误");
         },
     );
-}
+};
 
 /**
  * 执行注册
@@ -171,23 +171,23 @@ const doRegister = (code) => {
             ElMessage.success("注册成功, 已登录, 正在前往首页...");
         },
         () => {
-            // ElMessage.error("账号或密码错误");
+            // ElMessage.error("用户名已存在");
         },
     );
-}
+};
 
 // 定义登录提交函数
 const submitLoginForm = () => {
     // TODO[TEST_CODE]:测试直接进入主界面
-    ElMessage.success("登录成功, 前往首页");
-    $router.push('/home')
+    // ElMessage.success("登录成功, 前往首页");
+    // $router.push('/home')
 
     // 弹出验证码框
     // useVerify('clickWord')
 
     // TODO[TEST_CODE]:测试直接登录
     doLogin("");
-}
+};
 
 // 定义注册提交函数
 const submitRegisterForm = () => {
@@ -195,7 +195,7 @@ const submitRegisterForm = () => {
     // useVerify('clickWord')
 
     doRegister("");
-}
+};
 </script>
 
 <style lang="scss">

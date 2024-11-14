@@ -67,15 +67,14 @@ router.beforeEach(async function (to, from, next) {
         // 如果没有加载
         if (!isLoaded) {
             // 加载用户信息
-            await store.loadUser();
-            // 加载菜单资源
-            await store.loadMenus();
+            // await store.loadUser();
+            
             // 设置加载完毕
             store.setLoaded(true);
         }
         next();
     } else {
-        // 如果没有token值，直接进入登录
+        // 如果没有token值, 直接进入登录
         next({ name: "Login" });
         ElMessage.warning("在未登录时, 禁止访问其他页面!");
     }

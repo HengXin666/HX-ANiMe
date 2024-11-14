@@ -27,8 +27,8 @@ public class WebRequestInterceptor implements WebMvcConfigurer {
         // /user/* 只有user下一层路径包含在内 例：/user/api(包含) 、/user/api/zz(不包含)
         // /test/queryUser接口则是token验证后，把token为xx的玩家信息放入Request中，方便接口拿取
         registry.addInterceptor(new RequestInterceptor())
-                .addPathPatterns("/**")
-                .excludePathPatterns("/login/**");
+                .addPathPatterns("/**") // 所有请求
+                .excludePathPatterns("/login/**"); // 登录接口 不需要拦截
     }
 
     /**
@@ -36,9 +36,9 @@ public class WebRequestInterceptor implements WebMvcConfigurer {
      * @param registry
      */
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowCredentials(true)
+        registry.addMapping("/**") // 所有请求
+                .allowedOriginPatterns("*") // 允许跨域的域名, 可以用*表示允许任何域名使用
+                .allowCredentials(true) // 允许携带cookie
                 .allowedMethods("GET", "POST", "DELETE", "PUT")
                 .maxAge(3600 * 24);
     }
