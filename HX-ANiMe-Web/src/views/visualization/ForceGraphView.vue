@@ -87,7 +87,7 @@
                 <!-- 高级按钮靠左并带有图标 -->
                 <el-button style="float: left; color: #409EFF; font-weight: bold;"
                     @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{ addNodeAdvancedOptions ? "简单添加" :
-                    "高级选项"}}</el-button>
+                        "高级选项" }}</el-button>
 
                 <!-- 取消和确认按钮靠右 -->
                 <el-button @click="closeAddNodeDialog">取消</el-button>
@@ -473,7 +473,7 @@ onMounted(async () => {
             }
         });
 
-        // 鼠标右键 绑定事件
+        // 节点 鼠标右键 绑定事件
         myChart.value.on('contextmenu', { dataType: 'node' }, function (event: any) {
             if (startNodeId) {
                 // 如果已经选择了起始结点, 则设置终点, 连接为边
@@ -545,6 +545,58 @@ onMounted(async () => {
                 // 没有选择起点, 就是修改当前结点信息
                 openNodeUpDataDialog(event.data.id);
             }
+        });
+
+        // 连线的 鼠标右键 绑定事件
+        myChart.value.on('contextmenu', { dataType: 'edge' }, function (event: any) {
+            const edgeId: number = event.data.id;
+            ElMessageBox({
+                title: '确实删除边',
+                message: h('p', null, [
+                    h('span', null, '您真的要删除边: '),
+                    h('span', { style: 'color: ' + layoutThemeColor }, webkitDep.nodes.getItemById(event.data.source)?.name),
+                    h('span', null, ' --> '),
+                    h('span', { style: 'color: ' + layoutThemeColor }, webkitDep.nodes.getItemById(event.data.target)?.name),
+                    h('b', { style: 'color: red' }, " ( id = " + edgeId + " )"),
+                    h('span', null, ' 吗?'),
+                ]),
+                showCancelButton: true,
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                type: 'info',
+                beforeClose: (action, instance, done) => {
+                    if (action === 'confirm') {
+                        instance.confirmButtonLoading = true;
+                        instance.confirmButtonText = '正在删除...';
+                        // 假设这里你调用了某个 API 来删除节点
+                        removeEdge(edgeId).then(() => {
+                            // 假设删除成功, 关闭弹框
+                            done();
+                            ElMessage.success('删除成功');
+                            closeNodeUpDataDialog();
+                            // 播放删除动画
+                            createForceNodeData().then(newData => {
+                                myChart.value?.setOption({
+                                    series: [{
+                                        type: 'graph',
+                                        data: newData,
+                                        edges: webkitDep.links.getMapList(),
+                                    }]
+                                });
+                            });
+                        }).catch(() => {
+                            // 如果删除失败, 显示错误信息并不关闭弹框
+                            done();
+                            ElMessage.error('网络错误，删除失败');
+                        }).finally(() => {
+                            // 不管成功还是失败, 停止加载状态
+                            instance.confirmButtonLoading = false;
+                        });
+                    } else {
+                        done();
+                    }
+                },
+            });
         });
     }
 });
@@ -964,6 +1016,16 @@ const removeNodeLogic = () => {
 };
 
 // === End === 修改结点逻辑 === End ===
+
+// === Begin === 删除边逻辑 === Begin ===
+// 异步删除节点API
+const removeEdge = async (id: number) => {
+    // TODO 向后端确认, 通过id进行删除, 删除成功的话, 继续执行
+
+    // 删除前端边
+    webkitDep.links.removeItem(id);
+};
+// === end === 删除边逻辑 === end ===
 
 // 支持可导出: https://echarts.apache.org/zh/api.html#echartsInstance.renderToSVGString
 </script>
