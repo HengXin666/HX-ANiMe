@@ -625,16 +625,16 @@ const addNode = async (node: Node) => {
 // 重置视图到中心, 并且重置缩放
 const resetPosition = () => {
     if (myChart.value) {
-        myChart.value.dispatchAction({
-            type: 'dataZoom',
-            start: 0,
-            end: 100,
-        });
+        // myChart.value.dispatchAction({
+        //     type: 'dataZoom',
+        //     start: 0,
+        //     end: 100,
+        // });
 
         myChart.value.setOption({
             series: [{
                 zoom: 1,
-                center: 1,
+                // center: 1, // 不要这个, 不然严重的显示bug!!!
                 // 其他参数保持不变
             }]
         });

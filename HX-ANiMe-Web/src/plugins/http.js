@@ -64,7 +64,6 @@ export default (router) => {
 			// 提交的时候携带登录凭证
 			let store = useUserStore();
 			let token = store.getToken;
-			console.log("token: " + token);
 			if (!config.headers.common) {
 				config.headers.common = {}; // 确保 common 被初始化
 			}
