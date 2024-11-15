@@ -169,6 +169,7 @@ import * as echarts from 'echarts';
 import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
+import { getNodes } from '@/apis/forceGraph';
 import { RefreshRight, Plus, Setting, DocumentCopy } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
@@ -337,6 +338,12 @@ const createStaticNodeDataFromForce = async () => {
 
 // 在组件挂载后初始化图表
 onMounted(async () => {
+    getNodes({}, () => {
+        ElMessage.success("ok");
+    }, () => {
+        ElMessage.error("大错特错");
+    });
+
     if (chart.value) {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表

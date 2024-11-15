@@ -13,3 +13,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+jwt:
+  secret-key: "!@#$^HengXin%Loli0721_-"

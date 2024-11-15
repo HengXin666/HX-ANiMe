@@ -37,7 +37,7 @@ public class LoginDAO {
      **/
     public BaseUserDO queryLoginByUserName(BaseUserDO baseUserDO) {
         log.info("查询用户信息: {}", baseUserDO);
-        String sql = "SELECT type, user_name, nickname, email, password, salt, avatar FROM base_user WHERE user_name = ?";
+        String sql = "SELECT uid, type, user_name, nickname, email, password, salt, avatar FROM base_user WHERE user_name = ?";
         try {
             BaseUserDO user = jdbcTemplate.queryForObject(
                     sql,
@@ -46,6 +46,7 @@ public class LoginDAO {
                         @Override
                         public BaseUserDO mapRow(ResultSet rs, int rowNum) throws SQLException {
                             BaseUserDO user = new BaseUserDO();
+                            user.setUid(rs.getLong("uid"));
                             user.setType(rs.getInt("type"));
                             user.setUserName(rs.getString("user_name"));
                             user.setNickname(rs.getString("nickname"));

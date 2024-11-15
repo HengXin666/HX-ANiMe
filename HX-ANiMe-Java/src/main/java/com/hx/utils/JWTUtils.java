@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Date;
 
 public class JWTUtils {
-
-    @Value("${jwt.secret-key}")
-    private static String SECRET_KEY; // 密钥
+    public static String SECRET_KEY = "!@#$^HengXin%Loli0721_-"; // 密钥
     private static final long EXPIRATION_TIME = 1000 * 60 * 60; // 过期时间: 1小时
 
     // 生成JWT，传入id和name

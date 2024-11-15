@@ -1,6 +1,7 @@
 package com.hx.config;
 
 import com.hx.utils.JWTUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -16,6 +17,7 @@ import java.util.Enumeration;
  * @Description: 请求的token拦截器
  * @Version: 1.0
  */
+@Slf4j
 public class RequestInterceptor implements HandlerInterceptor {
     /**
      * 预处理回调方法，实现处理器的预处理（如检查登陆），第三个参数为响应的处理器，自定义Controller
@@ -48,7 +50,6 @@ public class RequestInterceptor implements HandlerInterceptor {
                 // 将 id 和 name 放入请求属性中，供后续处理使用
                 request.setAttribute("userId", id);
                 request.setAttribute("userName", name);
-
             } catch (Exception e) {
                 // 如果解析 Token 失败，可以返回错误信息，或者设置相应的状态码
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized

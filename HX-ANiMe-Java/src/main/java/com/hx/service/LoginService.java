@@ -42,7 +42,7 @@ public class LoginService {
         if (!Md5Utils.md5(requestDTO.getPassword(), baseUserDO.getSalt()).equals(baseUserDO.getPassword())) // 密码错误
             return null;
 
-        return JWTUtils.generateToken(baseUserDO.getUserName());
+        return JWTUtils.generateToken(baseUserDO.getUid(), baseUserDO.getUserName());
     }
 
     /**

@@ -54,7 +54,7 @@ export const useUserStore = defineStore("user", {
 		},
 		// 设置token
 		setToken(data) {
-			this.token = data.token;
+			this.token = data;
 			// this.refreshToken = data.refreshToken;
 			localStorage.setItem("token", this.token);
 			// localStorage.setItem("refreshToken", this.refreshToken);

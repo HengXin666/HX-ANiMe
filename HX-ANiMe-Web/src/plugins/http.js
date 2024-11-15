@@ -64,11 +64,13 @@ export default (router) => {
 			// 提交的时候携带登录凭证
 			let store = useUserStore();
 			let token = store.getToken;
+			console.log("token: " + token);
 			if (!config.headers.common) {
 				config.headers.common = {}; // 确保 common 被初始化
 			}
 			if (token) {
-				config.headers.common.Authorization = `Bearer ${token}`;
+				config.headers['Authorization'] = `Bearer ${token}`;
+				// config.headers.common.Authorization = `Bearer ${token}`;
 			}
 			// 处理提交方式参数序列化操作
 			// @ts-ignore
