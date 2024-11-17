@@ -61,7 +61,7 @@ router.beforeEach(async function (to, from, next) {
     let store = useUserStore();
     let token = store.getToken;
     // 如果有token
-    if (token) {
+    if (token && token !== "undefined") {
         // 判断是否已经加载数据
         let isLoaded = store.isLoaded;
         // 如果没有加载

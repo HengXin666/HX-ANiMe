@@ -1,8 +1,8 @@
 package com.hx.controller;
 
-import com.hx.pojo.login.DTO.JwtTokenDTO;
-import com.hx.pojo.login.DTO.UserLoginRequestDTO;
-import com.hx.pojo.login.DTO.UserRegisterRequestDTO;
+import com.hx.pojo.DTO.login.JwtTokenDTO;
+import com.hx.pojo.DTO.login.UserLoginRequestDTO;
+import com.hx.pojo.DTO.login.UserRegisterRequestDTO;
 import com.hx.pojo.vo.JsonVo;
 import com.hx.pojo.vo.ResultStatus;
 import com.hx.service.LoginService;

@@ -1,4 +1,4 @@
-package com.hx.pojo.login.DTO;
+package com.hx.pojo.DTO.login;
 
 import lombok.Data;
 

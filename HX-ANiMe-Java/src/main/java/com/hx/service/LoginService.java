@@ -1,10 +1,10 @@
 package com.hx.service;
 
 import com.hx.DAO.login.LoginDAO;
-import com.hx.pojo.login.DO.BaseUserDO;
-import com.hx.pojo.login.DTO.JwtTokenDTO;
-import com.hx.pojo.login.DTO.UserLoginRequestDTO;
-import com.hx.pojo.login.DTO.UserRegisterRequestDTO;
+import com.hx.pojo.DO.login.BaseUserDO;
+import com.hx.pojo.DTO.login.JwtTokenDTO;
+import com.hx.pojo.DTO.login.UserLoginRequestDTO;
+import com.hx.pojo.DTO.login.UserRegisterRequestDTO;
 import com.hx.utils.JWTUtils;
 import com.hx.utils.Md5Utils;
 import com.hx.utils.RandomStringUtils;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service

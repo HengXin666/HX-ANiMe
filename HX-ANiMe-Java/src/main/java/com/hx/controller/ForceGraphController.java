@@ -41,5 +41,4 @@ public class ForceGraphController {
             return "{Error: User ID or User Name is null}";
         }
     }
-
 }

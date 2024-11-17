@@ -643,7 +643,7 @@ const resetPosition = () => {
 
 // 打开设置的逻辑
 const openSettings = () => {
-    console.log("打开设置")
+    console.log("打开设置");
 };
 
 // === Begin === 添加结点界面逻辑 === Begin ===

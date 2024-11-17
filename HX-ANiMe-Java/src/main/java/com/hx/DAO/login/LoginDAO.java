@@ -1,6 +1,6 @@
 package com.hx.DAO.login;
 
-import com.hx.pojo.login.DO.BaseUserDO;
+import com.hx.pojo.DO.login.BaseUserDO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -87,15 +87,27 @@ public class LoginDAO {
             jdbcTemplate.update(new PreparedStatementCreator() {
                 @Override
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                    PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});  // "id" 是主键的列名
+                    PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"}); // "id" 是主键的列名
                     ps.setString(1, baseUserDO.getUserName());
                     ps.setString(2, baseUserDO.getNickname());
                     ps.setString(3, baseUserDO.getEmail());
                     ps.setString(4, baseUserDO.getPassword());
                     ps.setString(5, baseUserDO.getSalt());
                     ps.setString(6, baseUserDO.getAvatar());
-                    ps.setTimestamp(7, Timestamp.valueOf(baseUserDO.getLastLoginTime()));
-                    ps.setTimestamp(8, Timestamp.valueOf(baseUserDO.getCreTime()));
+
+                    // 检查并处理时间字段
+                    if (baseUserDO.getLastLoginTime() != null) {
+                        ps.setTimestamp(7, Timestamp.valueOf(baseUserDO.getLastLoginTime()));
+                    } else {
+                        ps.setTimestamp(7, null); // 或使用 new Timestamp(System.currentTimeMillis())
+                    }
+
+                    if (baseUserDO.getCreTime() != null) {
+                        ps.setTimestamp(8, Timestamp.valueOf(baseUserDO.getCreTime()));
+                    } else {
+                        ps.setTimestamp(8, new Timestamp(System.currentTimeMillis())); // 设置当前时间
+                    }
+
                     return ps;
                 }
             }, keyHolder);
