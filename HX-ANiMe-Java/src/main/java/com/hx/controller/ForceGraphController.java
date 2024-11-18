@@ -41,4 +41,9 @@ public class ForceGraphController {
             return "{Error: User ID or User Name is null}";
         }
     }
+
+    @PostMapping("/get-category")
+    public String getCategory(HttpServletRequest request) {
+        // 写DTO、DO艹
+    }
 }

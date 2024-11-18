@@ -189,19 +189,19 @@ type Node = {
     categoryId: number;
     category: string;
     img: string;
-    describe: string
+    describe: string;
 };
 
 type Category = {
     id: number;
     name: string;
-    color: string
+    color: string;
 };
 
 type Link = {
     id: number;
     source: string;
-    target: string
+    target: string;
 };
 
 // 图表数据
@@ -237,6 +237,25 @@ const webkitDep = {
 };
 
 // === End === 图表数据 === End ===
+
+// === Begin === 网络加载数据 (init) === Begin ===
+
+// 异步初始化图表数据
+const initCategory = async () => {
+
+};
+
+// 异步初始化结点数据
+const initNodes = async () => {
+
+};
+
+// 异步初始化边数据
+const initLinks = async () => {
+
+};
+
+// === End === 网络加载数据 (init) === End ===
 
 // === Begin === 添加边逻辑 === Begin ===
 
@@ -348,6 +367,9 @@ onMounted(async () => {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
+
+        // 网络加载
+
 
         const nodeData = await createForceNodeData(); // 获取节点数据
 
