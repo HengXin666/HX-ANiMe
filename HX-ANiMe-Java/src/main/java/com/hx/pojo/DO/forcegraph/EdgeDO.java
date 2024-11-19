@@ -11,17 +11,17 @@ public class EdgeDO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer edgeId;
+    private Long edgeId;
 
     @Column(nullable = false)
-    private Integer userId;
+    private Long userId;
 
     @Column(nullable = false)
-    private Integer userTableId;
+    private Long userTableId;
 
     @Column(nullable = false)
-    private Integer fromNodeId;
+    private Long fromNodeId;
 
     @Column(nullable = false)
-    private Integer toNodeId;
+    private Long toNodeId;
 }

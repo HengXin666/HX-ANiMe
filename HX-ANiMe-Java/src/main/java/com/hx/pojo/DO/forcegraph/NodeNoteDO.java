@@ -20,16 +20,16 @@ public class NodeNoteDO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer noteId;
+    private Long noteId;
 
     @Column(nullable = false)
-    private Integer userId;
+    private Long userId;
 
     @Column(nullable = false)
-    private Integer userTableId;
+    private Long userTableId;
 
     @Column(nullable = false)
-    private Integer nodeId;
+    private Long nodeId;
 
     @Column(nullable = false, length = 255)
     private String noteKey;

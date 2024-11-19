@@ -4,14 +4,14 @@ import Request from "../request";
 const currBaseUrl = "/force-graph/";
 
 /**
- * 测试token接口, 看看后端是否可以收到token的请求
- * @param data 登录数据
- * @param success 登录成功回调
- * @param fail 登录失败回调
+ * 获取图例
+ * @param userTableId 当前表id
+ * @param success 成功回调
+ * @param fail 失败回调
  */
-export const getNodes = (data, success, fail) => {
-	console.log("post: " + currBaseUrl + "get-nodes: " + data);
-	Request.requestJson(Request.POST, currBaseUrl + "get-nodes", data)
+export const getCategory = (userTableId, success, fail) => {
+	console.log("post: " + currBaseUrl + "get-category: " + userTableId);
+	Request.request(Request.POST, currBaseUrl + "get-category?userTableId=" + userTableId)
 		.then((data) => {
 			if (data) {
 				// 执行成功回调
