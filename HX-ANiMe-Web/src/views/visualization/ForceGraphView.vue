@@ -169,7 +169,7 @@ import * as echarts from 'echarts';
 import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
-import { getCategory } from '@/apis/forceGraph';
+import * as api from '@/apis/forceGraph';
 import { RefreshRight, Plus, Setting, DocumentCopy } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
@@ -206,25 +206,31 @@ type Link = {
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
-const categoriesData: Category[] = [
+const categoriesData: Category[] = [];
+[
     { id: 1, name: 'CV', color: '#990099' },
     { id: 2, name: 'Anime', color: '#334455' },
     { id: 3, name: 'Character', color: '#D6B782' },
 ];
 
 // TODO: 需要先加载 categoriesData, 然后再加载 nodesData
-const nodesData: Node[] = [
+const nodesData: Node[] = [];
+[
     { id: 1, name: 'CV 1', categoryId: 1, category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV' },
     { id: 2, name: 'Anime 1', categoryId: 2, category: 'Anime', img: '', describe: '这个是アニメ' },
     { id: 3, name: 'Character 1', categoryId: 3, category: 'Character', img: '', describe: '这个是角色1' },
     { id: 4, name: 'Character 2', categoryId: 3, category: 'Character', img: '', describe: '这个是角色2' },
 ];
 
-const linksData: Link[] = [
+const linksData: Link[] = [];
+[
     { id: 1, source: '1', target: '2' },
     { id: 2, source: '2', target: '3' },
     { id: 3, source: '3', target: '4' },
 ];
+
+// 当前图的id
+const nowGraphId = 1;
 
 // 创建 SyncArrayMap 实例
 const webkitDep = {
@@ -241,22 +247,32 @@ const webkitDep = {
 // === Begin === 网络加载数据 (init) === Begin ===
 
 // 异步初始化图表数据
-const initCategory = async () => {
-    getCategory(1, (data: any) => {
+const initCategory = (cb: any) => {
+    api.getCategory(nowGraphId, (data: any) => {
         ElMessage.success("ok");
         console.log(data);
+        const categoriesData: Category[] = [];
+        for (const it of data) {
+            categoriesData.push({
+                id: it.legendId,
+                name: it.legendName,
+                color: it.legendColor
+            })
+        }
+        webkitDep.categories = new SyncArrayMap(categoriesData);
+        cb();
     }, () => {
         ElMessage.error("大错特错");
     });
 };
 
 // 异步初始化结点数据
-const initNodes = async () => {
+const initNodes = () => {
 
 };
 
 // 异步初始化边数据
-const initLinks = async () => {
+const initLinks = () => {
 
 };
 
@@ -366,91 +382,90 @@ onMounted(async () => {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
-
-        // 网络加载
-        await initCategory();
-
-
+        
         const nodeData = await createForceNodeData(); // 获取节点数据
 
-        // 图表配置
-        const option = {
-            color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
-            legend: {
-                data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
-            },
-            // 提示框组件
-            tooltip: {
-                trigger: "item",
-                // 这里支持html! (使用函数就不支持 {b} 格式化了)
-                formatter: (params: any) => {
-                    if (params.dataType === "node") {
-                        return params.data.id + "<br/>";
-                    } else if (params.dataType === "edge") {
-                        return params.data.source + " --> " + params.data.target;
-                    } else {
-                        return "不支持显示";
-                    }
+        // 网络加载
+        initCategory(() => {
+            // 图表配置
+            const option = {
+                color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
+                legend: {
+                    data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
                 },
-                // 提示框浮层的背景颜色
-                backgroundColor: "rgba(50, 50, 50, 0.5)",
-                // 提示框浮层的边框颜色
-                borderColor: layoutThemeColor,
-                borderWidth: 1,
-            },
-            series: [
-                {
-                    type: 'graph', // 图表类型为图
-                    layout: 'force', // 力导向布局
-                    animation: true, // 开启动画
-                    draggable: true, // 允许拖动节点
-                    data: nodeData,  // 指定数据
-                    categories: webkitDep.categories.getMapList(), // 指定分类
-                    force: {
-                        edgeLength: [50, 200], // 边的长度
-                        repulsion: 100, // 排斥力
-                        gravity: 0.025, // 向中心的引力因子
-                    },
-                    edges: webkitDep.links.getMapList(), // 边的数据
-                    roam: true, // ('scale')只允许缩放
-                    edgeSymbol: ['circle', 'arrow'], // 箭头样式
-                    lineStyle: { // 连线样式
-                        color: layoutThemeColor,
-                        width: 2,
-                        curveness: 0,   // 曲率
-                        opacity: 0.75,  // 不透明度
-                    },
-                    label: {
-                        show: false, // 默认隐藏标签
-                    },
-                    // 问题: 依旧无法显示: 连接附近的结点的标签 (只能手写了事件吗, 每一次O(n^2))
-                    emphasis: {
-                        focus: 'adjacency', // 高亮当前节点及其相邻节点和边
-                        label: {
-                            position: 'right', // 高亮时显示标签的位置
-                            show: true         // 高亮时显示标签
+                // 提示框组件
+                tooltip: {
+                    trigger: "item",
+                    // 这里支持html! (使用函数就不支持 {b} 格式化了)
+                    formatter: (params: any) => {
+                        if (params.dataType === "node") {
+                            return params.data.id + "<br/>";
+                        } else if (params.dataType === "edge") {
+                            return params.data.source + " --> " + params.data.target;
+                        } else {
+                            return "不支持显示";
                         }
                     },
-                    // 连线样式
-                    edgeLabel: {
-                        normal: {
-                            show: true,
-                            textStyle: {
-                                color: layoutThemeColor,
-                                fontSize: 14,
-                            },
-                            formatter: function (param: any) { // 标签内容
-                                return webkitDep.nodes.getItemById(param.data.target)?.category;
+                    // 提示框浮层的背景颜色
+                    backgroundColor: "rgba(50, 50, 50, 0.5)",
+                    // 提示框浮层的边框颜色
+                    borderColor: layoutThemeColor,
+                    borderWidth: 1,
+                },
+                series: [
+                    {
+                        type: 'graph', // 图表类型为图
+                        layout: 'force', // 力导向布局
+                        animation: true, // 开启动画
+                        draggable: true, // 允许拖动节点
+                        data: nodeData,  // 指定数据
+                        categories: webkitDep.categories.getMapList(), // 指定分类
+                        force: {
+                            edgeLength: [50, 200], // 边的长度
+                            repulsion: 100, // 排斥力
+                            gravity: 0.025, // 向中心的引力因子
+                        },
+                        edges: webkitDep.links.getMapList(), // 边的数据
+                        roam: true, // ('scale')只允许缩放
+                        edgeSymbol: ['circle', 'arrow'], // 箭头样式
+                        lineStyle: { // 连线样式
+                            color: layoutThemeColor,
+                            width: 2,
+                            curveness: 0,   // 曲率
+                            opacity: 0.75,  // 不透明度
+                        },
+                        label: {
+                            show: false, // 默认隐藏标签
+                        },
+                        // 问题: 依旧无法显示: 连接附近的结点的标签 (只能手写了事件吗, 每一次O(n^2))
+                        emphasis: {
+                            focus: 'adjacency', // 高亮当前节点及其相邻节点和边
+                            label: {
+                                position: 'right', // 高亮时显示标签的位置
+                                show: true         // 高亮时显示标签
+                            }
+                        },
+                        // 连线样式
+                        edgeLabel: {
+                            normal: {
+                                show: true,
+                                textStyle: {
+                                    color: layoutThemeColor,
+                                    fontSize: 14,
+                                },
+                                formatter: function (param: any) { // 标签内容
+                                    return webkitDep.nodes.getItemById(param.data.target)?.category;
+                                }
                             }
                         }
-                    }
-                },
-            ],
-        };
+                    },
+                ],
+            };
 
-        myChart.value.hideLoading(); // 隐藏加载动画
-        myChart.value.setOption(option); // 设置图表选项
-
+            myChart.value?.hideLoading(); // 隐藏加载动画
+            myChart.value?.setOption(option); // 设置图表选项
+        });
+        
         // 窗口调整时图表自适应
         window.addEventListener('resize', () => {
             myChart.value?.resize();
@@ -630,15 +645,20 @@ onMounted(async () => {
     }
 });
 
-// 添加新节点
-const addNode = async (node: Node) => {
+// 添加新节点并且刷新图
+const addNodeToChart = async (node: Node) => {
     webkitDep.nodes.push(node);
     createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
+                color: webkitDep.categories.getMapList().map(it => it.color), // 全局的图例颜色
+                legend: {
+                    data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
+                },
                 series: [{
                     data: nodeData,
-                }],
+                    categories: webkitDep.categories.getMapList(),
+                }]
             });
         }
     });
@@ -771,7 +791,32 @@ const _addNodeTest = () => {
         describe: nodeForm.value.describe
     };
     ElMessage.info("添加结点id:" + node.id);
-    addNode(node);
+    addNodeToChart(node);
+};
+
+// 添加结点, 并且向后端同步
+const addNodeFromNet = (categoryId: number) => {
+    const node: Node = {
+        id: 0,
+        name: nodeForm.value.name,
+        categoryId: categoryId,
+        category: nodeForm.value.category,
+        img: nodeForm.value.imageUrl,
+        describe: nodeForm.value.describe
+    };
+    api.addNode(nowGraphId, {
+        nodeId: 0,
+        legendId: node.categoryId,
+        name: node.name,
+        imgUrl: node.img,
+        description: node.describe
+    }, (id: number) => {
+        node.id = id;
+        ElMessage.info("添加结点id:" + node.id);
+        addNodeToChart(node);
+    }, () => {
+
+    });
 };
 
 /**
@@ -785,27 +830,26 @@ const upDataCategory = (categoryName: string, categoryColor: string) => {
     if (it) {
         it.color = categoryColor;
     } else {
-        webkitDep.categories.push({
+        // 更新图例, 从后端获取到图例的 id
+        const newCategoryIt = {
             // TODO: 之后id应该是从数据库中获得
-            id: webkitDep.categories.getMapList().length + 1,
+            id: 0,
             name: categoryName,
             color: categoryColor
-        })
+        };
+        api.addCategory(nowGraphId, {
+            legendId: 0,
+            legendName: newCategoryIt.name,
+            legendColor: newCategoryIt.color
+        }, (id: number) => {
+            newCategoryIt.id = id;
+            webkitDep.categories.push(newCategoryIt);
+            // 添加结点
+            addNodeFromNet(id);
+        }, () => {
+
+        });
     }
-    createForceNodeData().then(nodeData => {
-        if (myChart.value) {
-            myChart.value.setOption({
-                color: webkitDep.categories.getMapList().map(it => it.color), // 全局的图例颜色
-                legend: {
-                    data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
-                },
-                series: [{
-                    data: nodeData,
-                    categories: webkitDep.categories.getMapList(),
-                }]
-            });
-        }
-    });
 };
 
 // 确认添加结点
@@ -821,9 +865,8 @@ const confirmAddNode = () => {
     console.log("添加结点数据：", nodeForm.value);
     // 处理图例
     upDataCategory(nodeForm.value.category, legendColor.value);
-    // 添加结点
-    _addNodeTest();
-    // http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
+
+    // TODO http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
     closeAddNodeDialog();
     resetAddNodeForm();
 };
