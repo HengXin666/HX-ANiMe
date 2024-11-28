@@ -13,6 +13,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.util.Objects;
 
 /**
  * @BelongsProject: HXANiMeWeb
@@ -113,7 +114,7 @@ public class LoginDAO {
             }, keyHolder);
 
             // 获取生成的主键 ID
-            return keyHolder.getKey().longValue();  // 返回生成的用户ID
+            return Objects.requireNonNull(keyHolder.getKey()).longValue();  // 返回生成的用户ID
         } catch (DataAccessException e) {
             log.info("Data access error: " + e.getMessage());
             return null;  // 发生异常时返回 null

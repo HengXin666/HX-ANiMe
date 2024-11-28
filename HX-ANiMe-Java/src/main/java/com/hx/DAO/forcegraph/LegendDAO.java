@@ -4,8 +4,11 @@ import com.hx.pojo.DO.forcegraph.LegendDO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
 import java.util.List;
 
 /**
@@ -23,13 +26,45 @@ public class LegendDAO {
     private JdbcTemplate jdbcTemplate;
     // 查询指定用户id和图表id的所有图例
     public List<LegendDO> queryLegend(Long userId, Long userTableId) {
-        String sql = "SELECT * FROM Legends WHERE user_id = "
-                + userId + " AND user_table_id = " + userTableId;
-        try {
-            return jdbcTemplate.query(sql, (rs, rowNum) -> new LegendDO());
-        } catch (Exception e) {
-            log.error("queryLegend error: {}", e.getMessage());
-            return null;
-        }
+        String sql = "SELECT * FROM Legends WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.query(
+            sql,
+            new Object[]{userId, userTableId},
+            (rs, rowNum) -> {
+                LegendDO legend = new LegendDO();
+                legend.setLegendId(rs.getLong("legend_id"));
+                legend.setUserId(rs.getLong("user_id"));
+                legend.setUserTableId(rs.getLong("user_table_id"));
+                legend.setLegendName(rs.getString("legend_name"));
+                legend.setLegendColor(rs.getString("legend_color"));
+                return legend;
+            }
+        );
+    }
+
+    /**
+     * @description: 新增图例, 并且返回图例id
+     * @author: Heng_Xin
+     * @date: 2024/11/22 10:30
+     * @param: legendDO
+     * @return: Long
+     **/
+    public Long addLegend(LegendDO legendDO) {
+        String sql = "INSERT INTO Legends (user_id, user_table_id, legend_name, legend_color) VALUES (?, ?, ?, ?)";
+
+        // 使用 KeyHolder 获取自增主键
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"}); // "id" 是主键列名
+            ps.setLong(1, legendDO.getUserId());
+            ps.setLong(2, legendDO.getUserTableId());
+            ps.setString(3, legendDO.getLegendName());
+            ps.setString(4, legendDO.getLegendColor());
+            return ps;
+        }, keyHolder);
+
+        // 返回主键 ID
+        return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
     }
 }

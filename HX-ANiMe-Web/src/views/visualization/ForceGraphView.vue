@@ -260,6 +260,8 @@ const initCategory = (cb: any) => {
             })
         }
         webkitDep.categories = new SyncArrayMap(categoriesData);
+        initNodes(cb);
+        initLinks(cb);
         cb();
     }, () => {
         ElMessage.error("大错特错");
@@ -267,12 +269,12 @@ const initCategory = (cb: any) => {
 };
 
 // 异步初始化结点数据
-const initNodes = () => {
+const initNodes = (cb: any) => {
 
 };
 
 // 异步初始化边数据
-const initLinks = () => {
+const initLinks = (cb: any) => {
 
 };
 
@@ -804,6 +806,10 @@ const addNodeFromNet = (categoryId: number) => {
         img: nodeForm.value.imageUrl,
         describe: nodeForm.value.describe
     };
+
+    // 处理图片, 获取到 imgUrl
+
+    // 添加结点
     api.addNode(nowGraphId, {
         nodeId: 0,
         legendId: node.categoryId,
@@ -824,11 +830,13 @@ const addNodeFromNet = (categoryId: number) => {
  * @param categoryName 图例名称
  * @param categoryColor 图例颜色
  */
-const upDataCategory = (categoryName: string, categoryColor: string) => {
+const upDataCategoryAndNode = (categoryName: string, categoryColor: string) => {
     // 如果找到这个图例, 则不用添加
     const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
     if (it) {
         it.color = categoryColor;
+        // 添加结点
+        addNodeFromNet(it.id);
     } else {
         // 更新图例, 从后端获取到图例的 id
         const newCategoryIt = {
@@ -863,8 +871,8 @@ const confirmAddNode = () => {
     }
     // 在这里可以将数据提交到后端或在图表中添加节点
     console.log("添加结点数据：", nodeForm.value);
-    // 处理图例
-    upDataCategory(nodeForm.value.category, legendColor.value);
+    // 处理图例 & 添加结点
+    upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
 
     // TODO http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
     closeAddNodeDialog();
@@ -1006,7 +1014,7 @@ const confirmUpDataNode = () => {
         it.img = cloneDeep(inputUrl.value);
         it.describe = cloneDeep(nodeForm.value.describe);
         // 同步图例颜色修改
-        upDataCategory(nodeForm.value.category, legendColor.value);
+        upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
     }
 
     closeNodeUpDataDialog();
