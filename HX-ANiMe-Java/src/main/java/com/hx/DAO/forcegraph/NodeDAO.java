@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.PreparedStatement;
+import java.util.List;
 
 /**
  * @BelongsProject: HX-ANiMe-Java
@@ -51,5 +52,24 @@ public class NodeDAO {
 
         // 返回主键 ID
         return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
+    }
+
+    public List<NodeDO> queryLegend(Long userId, Long userTableId) {
+        String sql = "SELECT * FROM Nodes WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.query(
+            sql,
+            new Object[]{userId, userTableId},
+            (rs, rowNum) -> {
+                NodeDO node = new NodeDO();
+                node.setNodeId(rs.getLong("node_id"));
+                node.setUserId(rs.getLong("user_id"));
+                node.setUserTableId(rs.getLong("user_table_id"));
+                node.setLegendId(rs.getLong("legend_id"));
+                node.setName(rs.getString("name"));
+                node.setImgUrl(rs.getString("img_url"));
+                node.setDescription(rs.getString("description"));
+                return node;
+            }
+        );
     }
 }

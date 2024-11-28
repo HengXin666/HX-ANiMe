@@ -26,28 +26,7 @@ import java.util.List;
 public class ForceGraphController {
     @Autowired
     private ForceGraphService forceGraphService; // 注入服务层
-    /**
-     * @description: 从数据库获取节点数据
-     * @author: Heng_Xin 
-     * @date: 2024/11/14 9:53 
-     * @return: String
-     **/
-    @PostMapping("/get-nodes")
-    public String getNodes(HttpServletRequest request) {
-        // 从请求属性中获取 id 和 name
-        Long userId = (Long) request.getAttribute("userId");
-        String userName = (String) request.getAttribute("userName");
-
-        log.info("User ID: {}, User Name: {}", userId, userName);
-
-        if (userId != null && userName != null) {
-            return "{UserID: " + userId + ", UserName: " + userName + "}";
-        } else {
-            // 不可能事件
-            return "{Error: User ID or User Name is null}";
-        }
-    }
-
+    
     /**
      * @description: 获取节点分类, 通过`userTableId`
      * @author: Heng_Xin
@@ -75,7 +54,28 @@ public class ForceGraphController {
         return JsonVo.success(legendDTOList);
     }
 
-    // 获取结点
+    /**
+     * @description: 获取所有结点, 通过用户id 和 图id
+     * @author: Heng_Xin
+     * @date: 2024/11/28 9:02
+     * @param: request
+     * @param: userTableId
+     * @return: JsonVo<List<NodeDTO>>
+     **/
+    @PostMapping("/get-nodes")
+    public JsonVo<List<NodeDTO>> getNodes(
+        HttpServletRequest request,
+        @RequestParam Long userTableId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        List<NodeDTO> nodeDTOList = forceGraphService.getNodes(userId, userTableId);
+        if (nodeDTOList == null) { // 查询报错了
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(nodeDTOList);
+    }
 
     // 获取边
 

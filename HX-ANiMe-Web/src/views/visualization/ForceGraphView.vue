@@ -206,7 +206,7 @@ type Link = {
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
-const categoriesData: Category[] = [];
+const _categoriesData: Category[] = [];
 [
     { id: 1, name: 'CV', color: '#990099' },
     { id: 2, name: 'Anime', color: '#334455' },
@@ -214,7 +214,7 @@ const categoriesData: Category[] = [];
 ];
 
 // TODO: 需要先加载 categoriesData, 然后再加载 nodesData
-const nodesData: Node[] = [];
+const _nodesData: Node[] = [];
 [
     { id: 1, name: 'CV 1', categoryId: 1, category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV' },
     { id: 2, name: 'Anime 1', categoryId: 2, category: 'Anime', img: '', describe: '这个是アニメ' },
@@ -222,7 +222,7 @@ const nodesData: Node[] = [];
     { id: 4, name: 'Character 2', categoryId: 3, category: 'Character', img: '', describe: '这个是角色2' },
 ];
 
-const linksData: Link[] = [];
+const _linksData: Link[] = [];
 [
     { id: 1, source: '1', target: '2' },
     { id: 2, source: '2', target: '3' },
@@ -235,11 +235,11 @@ const nowGraphId = 1;
 // 创建 SyncArrayMap 实例
 const webkitDep = {
     // 节点数据
-    nodes: new SyncArrayMap(nodesData),
+    nodes: new SyncArrayMap(_nodesData),
     // 图例
-    categories: new SyncArrayMap(categoriesData),
+    categories: new SyncArrayMap(_categoriesData),
     // 边集数组
-    links: new SyncArrayMap(linksData)
+    links: new SyncArrayMap(_linksData)
 };
 
 // === End === 图表数据 === End ===
@@ -249,8 +249,6 @@ const webkitDep = {
 // 异步初始化图表数据
 const initCategory = (cb: any) => {
     api.getCategory(nowGraphId, (data: any) => {
-        ElMessage.success("ok");
-        console.log(data);
         const categoriesData: Category[] = [];
         for (const it of data) {
             categoriesData.push({
@@ -260,8 +258,8 @@ const initCategory = (cb: any) => {
             })
         }
         webkitDep.categories = new SyncArrayMap(categoriesData);
-        initNodes(cb);
-        initLinks(cb);
+        initNodes();
+        initLinks();
         cb();
     }, () => {
         ElMessage.error("大错特错");
@@ -269,12 +267,30 @@ const initCategory = (cb: any) => {
 };
 
 // 异步初始化结点数据
-const initNodes = (cb: any) => {
+const initNodes = () => {
+    api.getNodes(nowGraphId, (data: any) => {
+        const nodesData: Node[] = [];
+        for (const it of data) {
+            nodesData.push({
+                id: it.nodeId,
+                categoryId: it.legendId,
+                name: it.name,
+                category: webkitDep.categories.getItemById(it.legendId)?.name,
+                img: it.imgUrl,
+                describe: it.description,
+            })
+        }
+        webkitDep.nodes = new SyncArrayMap(nodesData);
 
+        // 刷新图
+        addNodeToChart(null);
+    }, () => {
+        ElMessage.error("初始化结点出错");
+    });
 };
 
 // 异步初始化边数据
-const initLinks = (cb: any) => {
+const initLinks = () => {
 
 };
 
@@ -647,9 +663,10 @@ onMounted(async () => {
     }
 });
 
-// 添加新节点并且刷新图
-const addNodeToChart = async (node: Node) => {
-    webkitDep.nodes.push(node);
+// 添加新节点并且刷新图, 如果添加为null, 则只刷新图 
+const addNodeToChart = async (node: Node | null) => {
+    if (node !== null)
+        webkitDep.nodes.push(node);
     createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({

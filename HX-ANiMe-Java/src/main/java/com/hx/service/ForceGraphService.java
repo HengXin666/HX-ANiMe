@@ -88,4 +88,28 @@ public class ForceGraphService {
         legendDO.setLegendColor(legendDTO.getLegendColor());
         return legendDAO.addLegend(legendDO);
     }
+
+    /**
+     * @description: 获取所有节点
+     * @author: Heng_Xin
+     * @date: 2024/11/28 9:03
+     * @param: userId
+     * @param: userTableId
+     * @return: List<NodeDTO>
+     **/
+    public List<NodeDTO> getNodes(Long userId, Long userTableId) {
+        List<NodeDO> nodeDOList = nodeDAO.queryLegend(userId, userTableId);
+        if (nodeDOList == null) {
+            return null;
+        }
+        return nodeDOList.stream().map(nodeDO -> {
+            NodeDTO nodeDTO = new NodeDTO();
+            nodeDTO.setNodeId(nodeDO.getNodeId());
+            nodeDTO.setLegendId(nodeDO.getLegendId());
+            nodeDTO.setName(nodeDO.getName());
+            nodeDTO.setImgUrl(nodeDO.getImgUrl());
+            nodeDTO.setDescription(nodeDO.getDescription());
+            return nodeDTO;
+        }).collect(Collectors.toList());
+    }
 }
