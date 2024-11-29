@@ -79,6 +79,20 @@ public class ForceGraphController {
     }
 
     // 获取边
+    @PostMapping("/get-edges")
+    public JsonVo<List<EdgeDTO>> getEdges(
+        HttpServletRequest request,
+        @RequestParam Long userTableId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        List<EdgeDTO> edgeDTOList = forceGraphService.getEdges(userId, userTableId);
+        if (edgeDTOList == null) { // 查询报错了
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(edgeDTOList);
+    }
 
     /**
      * @description: 添加图例, 并返回图例 id

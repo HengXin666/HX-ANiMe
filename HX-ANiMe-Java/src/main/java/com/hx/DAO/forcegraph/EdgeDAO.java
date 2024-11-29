@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
+import java.util.List;
 
 /**
  * @BelongsProject: HX-ANiMe-Java
@@ -47,5 +48,31 @@ public class EdgeDAO {
 
         // 返回主键 ID
         return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
+    }
+
+    /**
+     * @description: 查询所有边
+     * @author: Heng_Xin
+     * @date: 2024/11/29 9:38
+     * @param: userId
+     * @param: userTableId
+     * @return: List<EdgeDO>
+     **/
+    public List<EdgeDO> queryEdges(Long userId, Long userTableId) {
+        String sql = "SELECT * FROM Edges WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.query(
+            sql,
+            (rs, rowNum) -> {
+                EdgeDO edge = new EdgeDO();
+                edge.setEdgeId(rs.getLong("edge_id"));
+                edge.setUserId(rs.getLong("user_id"));
+                edge.setUserTableId(rs.getLong("user_table_id"));
+                edge.setFromNodeId(rs.getLong("from_node_id"));
+                edge.setToNodeId(rs.getLong("to_node_id"));
+                return edge;
+            },
+            userId,
+            userTableId
+        );
     }
 }

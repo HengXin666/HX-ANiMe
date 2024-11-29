@@ -58,7 +58,6 @@ public class NodeDAO {
         String sql = "SELECT * FROM Nodes WHERE user_id = ? AND user_table_id = ?";
         return jdbcTemplate.query(
             sql,
-            new Object[]{userId, userTableId},
             (rs, rowNum) -> {
                 NodeDO node = new NodeDO();
                 node.setNodeId(rs.getLong("node_id"));
@@ -69,7 +68,9 @@ public class NodeDAO {
                 node.setImgUrl(rs.getString("img_url"));
                 node.setDescription(rs.getString("description"));
                 return node;
-            }
+            },
+            userId,
+            userTableId
         );
     }
 }

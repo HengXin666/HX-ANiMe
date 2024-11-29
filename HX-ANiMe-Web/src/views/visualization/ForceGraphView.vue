@@ -291,7 +291,22 @@ const initNodes = () => {
 
 // 异步初始化边数据
 const initLinks = () => {
+    api.getLinks(nowGraphId, (data: any) => {
+        const linksData: Link[] = [];
+        for (const it of data) {
+            linksData.push({
+                id: it.edgeId,
+                source: it.fromNodeId + '',
+                target: it.toNodeId + ''
+            })
+        }
+        webkitDep.links = new SyncArrayMap(linksData);
 
+        // 刷新图
+        addNodeToChart(null);
+    }, () => {
+        ElMessage.error("初始化边集出错");
+    });
 };
 
 // === End === 网络加载数据 (init) === End ===
@@ -689,7 +704,8 @@ const addNodeToChart = async (node: Node | null) => {
                 series: [{
                     data: nodeData,
                     categories: webkitDep.categories.getMapList(),
-                }]
+                    edges: webkitDep.links.getMapList(),
+                }],
             });
         }
     });

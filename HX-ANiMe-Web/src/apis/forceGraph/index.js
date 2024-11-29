@@ -10,10 +10,8 @@ const currBaseUrl = "/force-graph/";
  * @param fail 失败回调
  */
 export const getCategory = (userTableId, success, fail) => {
-	console.log("post: " + currBaseUrl + "get-legend: " + userTableId);
 	Request.request(Request.POST, currBaseUrl + "get-legend?userTableId=" + userTableId)
 		.then((data) => {
-			console.log(data);
 			if (data) {
 				// 执行成功回调
 				success(data.data);
@@ -37,10 +35,33 @@ export const getCategory = (userTableId, success, fail) => {
  * @param fail 失败回调
  */
 export const getNodes = (userTableId, success, fail) => {
-	console.log("post: " + currBaseUrl + "get-nodes: " + userTableId);
 	Request.request(Request.POST, currBaseUrl + "get-nodes?userTableId=" + userTableId)
 		.then((data) => {
-			console.log(data);
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		})
+		.catch((err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		});
+};
+
+/**
+ * 获取所有边
+ * @param userTableId 当前表id
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const getLinks = (userTableId, success, fail) => {
+	Request.request(Request.POST, currBaseUrl + "get-edges?userTableId=" + userTableId)
+		.then((data) => {
 			if (data) {
 				// 执行成功回调
 				success(data.data);
@@ -65,7 +86,6 @@ export const getNodes = (userTableId, success, fail) => {
  * @param fail 失败回调
  */
 export const addCategory = (userTableId, categoryData, success, fail) => {
-	console.log("post: " + currBaseUrl + "add-legend: " + userTableId);
 	Request.requestJson(Request.POST, currBaseUrl + "add-legend?userTableId=" + userTableId, categoryData)
 		.then((data) => {
 			if (data) {
@@ -92,7 +112,6 @@ export const addCategory = (userTableId, categoryData, success, fail) => {
  * @param fail 失败回调
  */
 export const addNode = (userTableId, nodeData, success, fail) => {
-	console.log("post: " + currBaseUrl + "add-node: " + userTableId);
 	Request.requestJson(Request.POST, currBaseUrl + "add-node?userTableId=" + userTableId, nodeData)
 		.then((data) => {
 			if (data) {
@@ -119,7 +138,6 @@ export const addNode = (userTableId, nodeData, success, fail) => {
  * @param fail 失败回调
  */
 export const addLink = (userTableId, linkData, success, fail) => {
-	console.log("post: " + currBaseUrl + "add-edge: " + userTableId);
 	Request.requestJson(Request.POST, currBaseUrl + "add-edge?userTableId=" + userTableId, linkData)
 		.then((data) => {
 			if (data) {

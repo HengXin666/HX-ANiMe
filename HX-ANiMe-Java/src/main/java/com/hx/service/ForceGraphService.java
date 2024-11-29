@@ -135,4 +135,26 @@ public class ForceGraphService {
         edgeDO.setToNodeId(edgeDTO.getToNodeId());
         return edgeDAO.addEdge(edgeDO);
     }
+
+    /**
+     * @description: 获取所有边
+     * @author: Heng_Xin
+     * @date: 2024/11/29 9:38
+     * @param: userId
+     * @param: userTableId
+     * @return: List<EdgeDTO>
+     **/
+    public List<EdgeDTO> getEdges(Long userId, Long userTableId) {
+        List<EdgeDO> edgeDOList = edgeDAO.queryEdges(userId, userTableId);
+        if (edgeDOList == null) {
+            return null;
+        }
+        return edgeDOList.stream().map(edgeDO -> {
+            EdgeDTO edgeDTO = new EdgeDTO();
+            edgeDTO.setEdgeId(edgeDO.getEdgeId());
+            edgeDTO.setFromNodeId(edgeDO.getFromNodeId());
+            edgeDTO.setToNodeId(edgeDO.getToNodeId());
+            return edgeDTO;
+        }).collect(Collectors.toList());
+    }
 }
