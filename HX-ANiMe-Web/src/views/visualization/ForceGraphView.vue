@@ -841,6 +841,19 @@ const _addNodeTest = () => {
     addNodeToChart(node);
 };
 
+// 上传图片到后端, 获取到url
+const uploadImgFromNet = (cb: Function) => {
+    // 这个接口有问题，不能上传图片!!!
+    api.uploadImg(nowGraphId, cachedFile.value, (url: any) => {
+        console.log(url);
+        nodeForm.value.imageUrl = url;
+        cachedFile.value = null;
+        cb();
+    }, () => {
+        ElMessage.error("上传图片出错");
+    });
+};
+
 // 添加结点, 并且向后端同步
 const addNodeFromNet = (categoryId: number) => {
     const node: Node = {
@@ -916,12 +929,25 @@ const confirmAddNode = () => {
     }
     // 在这里可以将数据提交到后端或在图表中添加节点
     console.log("添加结点数据：", nodeForm.value);
-    // 处理图例 & 添加结点
-    upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
 
-    // TODO http 需要获得结点的唯一id, 如果有图片, 则需要获取到url
-    closeAddNodeDialog();
-    resetAddNodeForm();
+    function fun() {
+        // 处理图例 & 添加结点
+        upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
+
+        // 关闭窗口
+        closeAddNodeDialog();
+        resetAddNodeForm();
+    };
+
+    // 处理图片: 更新到 nodeForm.value.imageUrl
+    console.log(cachedFile.value);
+    console.log(nodeForm.value.imageUrl);
+    if (cachedFile.value && nodeForm.value.imageUrl !== "") {
+        // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
+        uploadImgFromNet(fun);
+    } else {
+        fun();
+    }
 };
 
 // 输入框输入的图片URL

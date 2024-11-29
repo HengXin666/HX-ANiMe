@@ -17,3 +17,6 @@ spring:
 
 jwt:
   secret-key: "!@#$^HengXin%Loli0721_-"
+
+file:
+  path: "./file"

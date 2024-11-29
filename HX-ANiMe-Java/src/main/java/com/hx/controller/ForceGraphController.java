@@ -5,10 +5,12 @@ import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
 import com.hx.pojo.vo.JsonVo;
+import com.hx.pojo.vo.ResultStatus;
 import com.hx.service.ForceGraphService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -182,4 +184,33 @@ public class ForceGraphController {
     // 更新边
 
     // 更新图例
+
+    /**
+     * @description: 上传图片, 并且通过文件名判断是否重名, 并返回图片地址
+     * @author: Heng_Xin
+     * @date: 2024/11/29 10:38
+     * @param: request
+     * @param: userTableId
+     * @param: file
+     * @return: JsonVo<String> 重名则报错
+     **/
+    @PostMapping("/upload-img")
+    public JsonVo<String> uploadImg(
+        HttpServletRequest request,
+        @RequestParam Long userTableId,
+        @RequestParam MultipartFile file
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("上传图片 User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        // 判断图片大小, 是否小于5M
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return JsonVo.create(null, ResultStatus.PARAMS_INVALID.getCode(), "图片大小超过5M");
+        }
+        String imgUrl = forceGraphService.uploadImg(userId, userTableId, file);
+        if (imgUrl == null) {
+            return JsonVo.create(null, ResultStatus.FAIL.getCode(), "文件重名!");
+        }
+        return JsonVo.success(imgUrl);
+    }
 }

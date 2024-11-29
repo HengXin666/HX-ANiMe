@@ -11,8 +11,12 @@ import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +37,11 @@ public class ForceGraphService {
     private NodeDAO nodeDAO;
     @Autowired
     private EdgeDAO edgeDAO;
+
+    // 保存文件的根路径, 通过读取, application.yaml配置文件
+    @Value("${file.path}")
+    private String FILE_PATH;
+
     /**
      * @description: 获取图例
      * @author: Heng_Xin
@@ -156,5 +165,44 @@ public class ForceGraphService {
             edgeDTO.setToNodeId(edgeDO.getToNodeId());
             return edgeDTO;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * @description: 上传图片
+     * @author: Heng_Xin
+     * @date: 2024/11/29 10:42
+     * @param: userId
+     * @param: userTableId
+     * @param: file
+     * @return: String
+     **/
+    public String uploadImg(Long userId, Long userTableId, MultipartFile file) {
+        // 保存图片到服务器, 路径为: ~/images/force-graph/userId/userTableId/fileName
+        // ~路径读取application.yaml配置文件!
+        String fileName = file.getOriginalFilename();
+        String filePath = FILE_PATH + "/images/force-graph/" + userId + "/" + userTableId + "/" + fileName;
+        // 判断是否有该文件夹, 没有则创建
+        File dir = new File(filePath.substring(0, filePath.lastIndexOf("/")));
+        if (!dir.exists()) {
+            try {
+                dir.mkdirs();
+            } catch (Exception e) {
+                log.error("创建文件夹失败: {}", e.getMessage());
+                return null;
+            }
+        }
+        File dest = new File(filePath);
+        // 判断是否重名
+        if (dest.exists()) {
+            log.error("上传图片失败: 文件已存在");
+            return null;
+        }
+        try {
+            file.transferTo(dest);
+        } catch (IOException e) {
+            log.error("上传图片失败: {}", e.getMessage());
+            return null;
+        }
+        return filePath;
     }
 }

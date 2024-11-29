@@ -155,3 +155,31 @@ export const addLink = (userTableId, linkData, success, fail) => {
 			fail();
 		});
 };
+
+/**
+ * 上传图片
+ * @param userTableId 当前表id
+ * @param fileData 文件数据
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const uploadImg = (userTableId, fileData, success, fail) => {
+	Request.postFileStream(
+		currBaseUrl + "upload-img?userTableId=" + userTableId,
+		fileData,
+		(data) => {
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		}, (err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		}
+	);
+};
