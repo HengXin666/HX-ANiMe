@@ -85,7 +85,7 @@ export const addCategory = (userTableId, categoryData, success, fail) => {
 };
 
 /**
- * 添加图例
+ * 添加结点
  * @param userTableId 当前表id
  * @param nodeData 图例数据
  * @param success 成功回调
@@ -94,6 +94,33 @@ export const addCategory = (userTableId, categoryData, success, fail) => {
 export const addNode = (userTableId, nodeData, success, fail) => {
 	console.log("post: " + currBaseUrl + "add-node: " + userTableId);
 	Request.requestJson(Request.POST, currBaseUrl + "add-node?userTableId=" + userTableId, nodeData)
+		.then((data) => {
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		})
+		.catch((err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		});
+};
+
+/**
+ * 添加边
+ * @param userTableId 当前表id
+ * @param linkData 图例数据
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const addLink = (userTableId, linkData, success, fail) => {
+	console.log("post: " + currBaseUrl + "add-edge: " + userTableId);
+	Request.requestJson(Request.POST, currBaseUrl + "add-edge?userTableId=" + userTableId, linkData)
 		.then((data) => {
 			if (data) {
 				// 执行成功回调

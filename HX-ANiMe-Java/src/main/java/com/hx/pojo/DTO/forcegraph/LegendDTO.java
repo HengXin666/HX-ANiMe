@@ -13,7 +13,7 @@ import lombok.Data;
 
 @Data
 public class LegendDTO {
-    private Long legendId;
+    private Long legendId; // 用户传入时候, 该项无用
     private String legendName;
     private String legendColor;
 }

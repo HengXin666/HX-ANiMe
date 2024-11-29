@@ -510,7 +510,7 @@ onMounted(async () => {
         // });
 
         // 鼠标中键 绑定事件
-        myChart.value.on('mousedown', { dataType: 'node' }, function (event: any) {
+        myChart.value.on('mousedown', { dataType: 'node' }, (event: any) => {
             // 判断是否是节点, 并且只允许左键
             if (event.event.event.button === 1) { // 鼠标中键
                 if (startNodeId && startNodeId === event.data.id) {
@@ -536,7 +536,7 @@ onMounted(async () => {
         });
 
         // 节点 鼠标右键 绑定事件
-        myChart.value.on('contextmenu', { dataType: 'node' }, function (event: any) {
+        myChart.value.on('contextmenu', { dataType: 'node' }, (event: any) => {
             if (startNodeId) {
                 // 如果已经选择了起始结点, 则设置终点, 连接为边
                 if (startNodeId === event.data.id) {
@@ -556,52 +556,64 @@ onMounted(async () => {
                 }
 
                 const linkNode = {
-                    id: webkitDep.links.getMapList().length + 1,
+                    id: 0,
                     source: startNodeId + '',
                     target: endNodeId + '',
                 };
 
-                webkitDep.links.push(linkNode);
+                // 添加边, 后端同步
+                api.addLink(nowGraphId, {
+                    edgeId: 0,
+                    fromNodeId: linkNode.source,
+                    toNodeId: linkNode.target
+                }, (data: any) => {
+                    console.log(data);
+                    linkNode.id = data;
 
-                // 播放动画: 变为静态图 -> 动画 -> 变回力导向图
-                createStaticNodeDataFromForce().then(nodeData => {
-                    function switchToForceLayout (zoomLevel: number) {
-                        // 重置
-                        startNodeId = null;
-                        endNodeId = null;
-                        createForceNodeData().then(newData => {
-                            myChart.value?.setOption({
-                                series: [{
-                                    type: 'graph',
-                                    layout: 'force',
-                                    data: newData,
-                                    edges: webkitDep.links.getMapList(),
-                                    zoom: zoomLevel,
-                                }]
+                    webkitDep.links.push(linkNode);
+
+                    // 播放动画: 变为静态图 -> 动画 -> 变回力导向图
+                    createStaticNodeDataFromForce().then(nodeData => {
+                        function switchToForceLayout (zoomLevel: number) {
+                            // 重置
+                            startNodeId = null;
+                            endNodeId = null;
+                            createForceNodeData().then(newData => {
+                                myChart.value?.setOption({
+                                    series: [{
+                                        type: 'graph',
+                                        layout: 'force',
+                                        data: newData,
+                                        edges: webkitDep.links.getMapList(),
+                                        zoom: zoomLevel,
+                                    }]
+                                });
                             });
+                        };
+
+                        const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
+
+                        myChart.value?.setOption({
+                            series: [{
+                                type: 'graph',
+                                layout: 'none', // 转换为静态布局
+                                data: nodeData, // 使用固定位置的节点
+                                zoom: zoomLevel * 0.24, // TODO 此处的 k 可能和力导向公式有关...
+                                edges: webkitDep.links.getMapList(),
+                            }]
                         });
-                    };
 
-                    const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
+                        // 播放连边的动画效果 (只能是非力导向图)
+                        myChart.value?.dispatchAction({
+                            type: 'graphAddLink',
+                            link: linkNode,
+                        });
 
-                    myChart.value?.setOption({
-                        series: [{
-                            type: 'graph',
-                            layout: 'none', // 转换为静态布局
-                            data: nodeData, // 使用固定位置的节点
-                            zoom: zoomLevel * 0.24, // TODO 此处的 k 可能和力导向公式有关...
-                            edges: webkitDep.links.getMapList(),
-                        }]
+                        // 手动延迟 1100ms, 因为动画播放固定位 1s
+                        setTimeout(() => switchToForceLayout(zoomLevel), 1100);
                     });
+                }, () => {
 
-                    // 播放连边的动画效果 (只能是非力导向图)
-                    myChart.value?.dispatchAction({
-                        type: 'graphAddLink',
-                        link: linkNode,
-                    });
-
-                    // 手动延迟 1100ms, 因为动画播放固定位 1s
-                    setTimeout(() => switchToForceLayout(zoomLevel), 1100);
                 });
             } else {
                 // 没有选择起点, 就是修改当前结点信息
@@ -610,7 +622,7 @@ onMounted(async () => {
         });
 
         // 连线的 鼠标右键 绑定事件
-        myChart.value.on('contextmenu', { dataType: 'edge' }, function (event: any) {
+        myChart.value.on('contextmenu', { dataType: 'edge' }, (event: any) => {
             const edgeId: number = event.data.id;
             ElMessageBox({
                 title: '确实删除边',

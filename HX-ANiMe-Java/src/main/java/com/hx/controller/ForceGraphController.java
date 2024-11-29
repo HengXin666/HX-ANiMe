@@ -1,6 +1,7 @@
 package com.hx.controller;
 
 import com.hx.pojo.DO.forcegraph.LegendDO;
+import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
 import com.hx.pojo.vo.JsonVo;
@@ -26,7 +27,7 @@ import java.util.List;
 public class ForceGraphController {
     @Autowired
     private ForceGraphService forceGraphService; // 注入服务层
-    
+
     /**
      * @description: 获取节点分类, 通过`userTableId`
      * @author: Heng_Xin
@@ -131,7 +132,30 @@ public class ForceGraphController {
         return JsonVo.success(res);
     }
 
-    // 添加边
+    /**
+     * @description: 添加边, 并返回边 id
+     * @author: Heng_Xin
+     * @date: 2024/11/29 9:22
+     * @param: request
+     * @param: userTableId
+     * @param: edgeDTO
+     * @return: JsonVo<Long>
+     **/
+    @PostMapping("/add-edge")
+    public JsonVo<Long> addEdge(
+        HttpServletRequest request,
+        @RequestParam Long userTableId,
+        @RequestBody EdgeDTO edgeDTO
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("添加边 User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        Long res = forceGraphService.addEdge(userId, userTableId, edgeDTO);
+        if (res == null) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(res);
+    }
 
     // 删除结点
 

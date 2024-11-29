@@ -1,9 +1,12 @@
 package com.hx.service;
 
+import com.hx.DAO.forcegraph.EdgeDAO;
 import com.hx.DAO.forcegraph.LegendDAO;
 import com.hx.DAO.forcegraph.NodeDAO;
+import com.hx.pojo.DO.forcegraph.EdgeDO;
 import com.hx.pojo.DO.forcegraph.LegendDO;
 import com.hx.pojo.DO.forcegraph.NodeDO;
+import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,8 @@ public class ForceGraphService {
     private LegendDAO legendDAO;
     @Autowired
     private NodeDAO nodeDAO;
+    @Autowired
+    private EdgeDAO edgeDAO;
     /**
      * @description: 获取图例
      * @author: Heng_Xin
@@ -111,5 +116,23 @@ public class ForceGraphService {
             nodeDTO.setDescription(nodeDO.getDescription());
             return nodeDTO;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * @description: 添加边
+     * @author: Heng_Xin
+     * @date: 2024/11/29 9:22
+     * @param: userId
+     * @param: userTableId
+     * @param: edgeDTO
+     * @return: Long
+     **/
+    public Long addEdge(Long userId, Long userTableId, EdgeDTO edgeDTO) {
+        EdgeDO edgeDO = new EdgeDO();
+        edgeDO.setUserId(userId);
+        edgeDO.setUserTableId(userTableId);
+        edgeDO.setFromNodeId(edgeDTO.getFromNodeId());
+        edgeDO.setToNodeId(edgeDTO.getToNodeId());
+        return edgeDAO.addEdge(edgeDO);
     }
 }
