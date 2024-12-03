@@ -865,8 +865,6 @@ const addNodeFromNet = (categoryId: number) => {
         describe: nodeForm.value.describe
     };
 
-    // 处理图片, 获取到 imgUrl
-
     // 添加结点
     api.addNode(nowGraphId, {
         nodeId: 0,
@@ -883,12 +881,48 @@ const addNodeFromNet = (categoryId: number) => {
     });
 };
 
+// 修改结点, 并且同步到后端
+const updateNodeFromNet = (categoryId: number) => {
+    const node: Node = {
+        id: nowUpDataNodeId.value,
+        name: nodeForm.value.name,
+        categoryId: categoryId,
+        category: nodeForm.value.category,
+        img: nodeForm.value.imageUrl,
+        describe: nodeForm.value.describe
+    };
+
+    // 修改结点
+    api.updateNode(nowGraphId, {
+        nodeId: node.id,
+        legendId: node.categoryId,
+        name: node.name,
+        imgUrl: node.img,
+        description: node.describe
+    }, () => {
+        ElMessage.info("修改结点id:" + node.id);
+
+        const it = webkitDep.nodes.getItemById(node.id);
+        if (it) {
+            it.name = cloneDeep(nodeForm.value.name);
+            it.category = cloneDeep(nodeForm.value.category);
+            it.img = cloneDeep(inputUrl.value);
+            it.describe = cloneDeep(nodeForm.value.describe);
+        }
+
+        // 刷新界面
+        addNodeToChart(null);
+    }, () => {
+
+    });
+};
+
 /**
- * 修改图例
+ * 新增图例和结点
  * @param categoryName 图例名称
  * @param categoryColor 图例颜色
  */
-const upDataCategoryAndNode = (categoryName: string, categoryColor: string) => {
+const addCategoryAndNode = (categoryName: string, categoryColor: string) => {
     // 如果找到这个图例, 则不用添加
     const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
     if (it) {
@@ -918,6 +952,41 @@ const upDataCategoryAndNode = (categoryName: string, categoryColor: string) => {
     }
 };
 
+/**
+ * 修改图例和结点
+ * @param categoryName 
+ * @param categoryColor 
+ */
+const updateCategoryAndNode = (categoryName: string, categoryColor: string) => {
+    // 如果找到这个图例, 则不用添加
+    const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
+    if (it) {
+        it.color = categoryColor;
+        // 添加结点
+        updateNodeFromNet(it.id);
+    } else {
+        // 更新图例, 从后端获取到图例的 id
+        const newCategoryIt = {
+            // TODO: 之后id应该是从数据库中获得
+            id: 0,
+            name: categoryName,
+            color: categoryColor
+        };
+        api.addCategory(nowGraphId, {
+            legendId: 0,
+            legendName: newCategoryIt.name,
+            legendColor: newCategoryIt.color
+        }, (id: number) => {
+            newCategoryIt.id = id;
+            webkitDep.categories.push(newCategoryIt);
+            // 添加结点
+            updateNodeFromNet(id);
+        }, () => {
+
+        });
+    }
+};
+
 // 确认添加结点
 const confirmAddNode = () => {
     if (!nodeForm.value.name) {
@@ -932,7 +1001,7 @@ const confirmAddNode = () => {
 
     function fun() {
         // 处理图例 & 添加结点
-        upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
+        addCategoryAndNode(nodeForm.value.category, legendColor.value);
 
         // 关闭窗口
         closeAddNodeDialog();
@@ -942,7 +1011,7 @@ const confirmAddNode = () => {
     // 处理图片: 更新到 nodeForm.value.imageUrl
     console.log(cachedFile.value);
     console.log(nodeForm.value.imageUrl);
-    if (cachedFile.value && nodeForm.value.imageUrl !== "") {
+    if (cachedFile.value && nodeForm.value.imageUrl === "") {
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
     } else {
@@ -1076,19 +1145,23 @@ const closeNodeUpDataDialog = () => {
 
 // 修改结点
 const confirmUpDataNode = () => {
-    // TODO 同步数据到后端...
-    // 如果后端修改成功, 则同步到前端
-    const it = webkitDep.nodes.getItemById(nowUpDataNodeId.value);
-    if (it) {
-        it.name = cloneDeep(nodeForm.value.name);
-        it.category = cloneDeep(nodeForm.value.category);
-        it.img = cloneDeep(inputUrl.value);
-        it.describe = cloneDeep(nodeForm.value.describe);
-        // 同步图例颜色修改
-        upDataCategoryAndNode(nodeForm.value.category, legendColor.value);
-    }
+    function fun() {
+        // 处理图例 & 修改结点
+        updateCategoryAndNode(nodeForm.value.category, legendColor.value);
 
-    closeNodeUpDataDialog();
+        // 关闭窗口
+        closeNodeUpDataDialog();
+    };
+
+    // 处理图片: 更新到 nodeForm.value.imageUrl
+    console.log(cachedFile.value);
+    console.log(nodeForm.value.imageUrl);
+    if (cachedFile.value && nodeForm.value.imageUrl === "") {
+        // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
+        uploadImgFromNet(fun);
+    } else {
+        fun();
+    }
 };
 
 // 异步删除结点api

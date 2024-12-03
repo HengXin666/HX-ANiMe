@@ -73,4 +73,23 @@ public class NodeDAO {
             userTableId
         );
     }
+
+    /**
+     * @description: 更新结点
+     * @author: Heng_Xin
+     * @date: 2024/12/3 17:02
+     * @param: nodeDO
+     * @return: 变更行数
+     **/
+    public int updateNode(NodeDO nodeDO) {
+        String sql = "UPDATE Nodes SET legend_id = ?, name = ?, img_url = ?, description = ? WHERE node_id = ?";
+        return jdbcTemplate.update(
+            sql,
+            nodeDO.getLegendId(),
+            nodeDO.getName(),
+            nodeDO.getImgUrl(),
+            nodeDO.getDescription(),
+            nodeDO.getNodeId()
+        );
+    }
 }

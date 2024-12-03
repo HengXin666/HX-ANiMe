@@ -205,4 +205,25 @@ public class ForceGraphService {
         }
         return filePath;
     }
+
+    /**
+     * @description: 更新结点
+     * @author: Heng_Xin 
+     * @date: 2024/12/3 17:01
+     * @param: userId
+     * @param: userTableId
+     * @param: nodeDTO
+     * @return: 是否更新成功
+     **/
+    public Boolean updateNode(Long userId, Long userTableId, NodeDTO nodeDTO) {
+        NodeDO nodeDO = new NodeDO();
+        nodeDO.setNodeId(nodeDTO.getNodeId());
+        nodeDO.setUserId(userId);
+        nodeDO.setUserTableId(userTableId);
+        nodeDO.setLegendId(nodeDTO.getLegendId());
+        nodeDO.setName(nodeDTO.getName());
+        nodeDO.setImgUrl(nodeDTO.getImgUrl());
+        nodeDO.setDescription(nodeDTO.getDescription());
+        return nodeDAO.updateNode(nodeDO) > 0;
+    }
 }

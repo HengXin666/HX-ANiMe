@@ -164,10 +164,36 @@ export const addLink = (userTableId, linkData, success, fail) => {
  * @param fail 失败回调
  */
 export const uploadImg = (userTableId, fileData, success, fail) => {
-	Request.postFileStream(
+	console.log(fileData);
+	Request.postFile(
 		currBaseUrl + "upload-img?userTableId=" + userTableId,
-		fileData,
-		(data) => {
+		{file: fileData.file}
+	).then((data) => {
+		if (data) {
+			// 执行成功回调
+			success(data.data);
+			return;
+		}
+		// 执行失败回调
+		fail();
+	}).catch((err) => {
+		// 打印错误信息
+		console.warn(err);
+		// 执行失败回调
+		fail();
+	});
+};
+
+/**
+ * 修改结点
+ * @param userTableId 当前表id
+ * @param nodeData 图例数据
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const updateNode = (userTableId, nodeData, success, fail) => {
+	Request.requestJson(Request.POST, currBaseUrl + "update-node?userTableId=" + userTableId, nodeData)
+		.then((data) => {
 			if (data) {
 				// 执行成功回调
 				success(data.data);
@@ -175,11 +201,11 @@ export const uploadImg = (userTableId, fileData, success, fail) => {
 			}
 			// 执行失败回调
 			fail();
-		}, (err) => {
+		})
+		.catch((err) => {
 			// 打印错误信息
 			console.warn(err);
 			// 执行失败回调
 			fail();
-		}
-	);
+		});
 };

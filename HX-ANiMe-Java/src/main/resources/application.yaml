@@ -14,6 +14,10 @@ spring:
       # 自动建表
       ddl-auto: update
     show-sql: true
+  web:
+    resources:
+      # 让服务器支持静态资源访问
+      static-locations: classpath:/static/,file:./file/
 
 jwt:
   secret-key: "!@#$^HengXin%Loli0721_-"

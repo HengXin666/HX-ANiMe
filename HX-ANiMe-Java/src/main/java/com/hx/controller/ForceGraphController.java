@@ -179,7 +179,29 @@ public class ForceGraphController {
 
     // 删除图例
 
-    // 更新结点
+    /**
+     * @description: 更新结点
+     * @author: Heng_Xin
+     * @date: 2024/12/3 17:05
+     * @param: request
+     * @param: userTableId
+     * @param: nodeDTO
+     * @return: JsonVo<Long>
+     **/
+    @PostMapping("/update-node")
+    public JsonVo<String> updateNode(
+        HttpServletRequest request,
+        @RequestParam Long userTableId,
+        @RequestBody NodeDTO nodeDTO
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("更新结点 User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        if (!forceGraphService.updateNode(userId, userTableId, nodeDTO)) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success("ok");
+    }
 
     // 更新边
 
@@ -198,7 +220,7 @@ public class ForceGraphController {
     public JsonVo<String> uploadImg(
         HttpServletRequest request,
         @RequestParam Long userTableId,
-        @RequestParam MultipartFile file
+        @RequestParam("file") MultipartFile file
     ) {
         Long userId = (Long) request.getAttribute("userId");
         String userName = (String) request.getAttribute("userName");
