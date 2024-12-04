@@ -847,7 +847,7 @@ const uploadImgFromNet = (cb: Function) => {
     // 这个接口有问题，不能上传图片!!!
     api.uploadImg(nowGraphId, cachedFile.value, (url: any) => {
         console.log(url);
-        nodeForm.value.imageUrl = url;
+        nodeForm.value.imageUrl = cloneDeep(url);
         cachedFile.value = null;
         cb();
     }, () => {
@@ -1055,14 +1055,14 @@ const updateImage = (rawFile: UploadRawFile) => {
 // 限制文件类型和大小
 const beforeUpload = (file: File) => {
     const isImage = file.type.startsWith("image/");
-    const isLt2M = file.size / 1024 / 1024 < 2;
+    const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isImage) {
         ElMessage.error("只能上传图片文件");
     }
-    if (!isLt2M) {
-        ElMessage.error("上传图片大小不能超过 2MB");
+    if (!isLt5M) {
+        ElMessage.error("上传图片大小不能超过 5MB");
     }
-    return isImage && isLt2M;
+    return isImage && isLt5M;
 };
 
 // 从粘贴板中获取图片
@@ -1073,7 +1073,7 @@ const handlePaste = (event: ClipboardEvent) => {
             const item = items[i];
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
-                if (file) {
+                if (file && beforeUpload(file)) {
                     previewImage(file);
                     cachedFile.value = file;
                 }
@@ -1084,6 +1084,8 @@ const handlePaste = (event: ClipboardEvent) => {
 
 // 预览图片
 const previewImage = (file: File) => {
+    if (!beforeUpload(file))
+        return;
     const reader = new FileReader();
     reader.onload = () => {
         imageUrl.value = reader.result;

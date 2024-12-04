@@ -3,6 +3,7 @@ package com.hx.service;
 import com.hx.DAO.forcegraph.EdgeDAO;
 import com.hx.DAO.forcegraph.LegendDAO;
 import com.hx.DAO.forcegraph.NodeDAO;
+import com.hx.config.GlobalConfig;
 import com.hx.pojo.DO.forcegraph.EdgeDO;
 import com.hx.pojo.DO.forcegraph.LegendDO;
 import com.hx.pojo.DO.forcegraph.NodeDO;
@@ -37,6 +38,8 @@ public class ForceGraphService {
     private NodeDAO nodeDAO;
     @Autowired
     private EdgeDAO edgeDAO;
+    @Autowired
+    private GlobalConfig globalConfig;
 
     // 保存文件的根路径, 通过读取, application.yaml配置文件
     @Value("${file.path}")
@@ -177,33 +180,36 @@ public class ForceGraphService {
      * @return: String
      **/
     public String uploadImg(Long userId, Long userTableId, MultipartFile file) {
-        // 保存图片到服务器, 路径为: ~/images/force-graph/userId/userTableId/fileName
-        // ~路径读取application.yaml配置文件!
+        // 文件名和路径
         String fileName = file.getOriginalFilename();
-        String filePath = FILE_PATH + "/images/force-graph/" + userId + "/" + userTableId + "/" + fileName;
-        // 判断是否有该文件夹, 没有则创建
-        File dir = new File(filePath.substring(0, filePath.lastIndexOf("/")));
-        if (!dir.exists()) {
-            try {
-                dir.mkdirs();
-            } catch (Exception e) {
-                log.error("创建文件夹失败: {}", e.getMessage());
-                return null;
-            }
+        String dirPath = "/images/force-graph/" + userId + "/" + userTableId;
+        String filePath = dirPath + "/" + fileName;
+
+        log.info("准备上传文件，路径: {}", filePath);
+
+        // 创建文件夹
+        File dir = new File(FILE_PATH + dirPath);
+        if (!dir.exists() && !dir.mkdirs()) {
+            log.error("创建文件夹失败: {}", FILE_PATH + dirPath);
+            return null;
         }
-        File dest = new File(filePath);
-        // 判断是否重名
+
+        // 保存文件
+        File dest = new File(FILE_PATH + filePath);
         if (dest.exists()) {
             log.error("上传图片失败: 文件已存在");
             return null;
         }
+
         try {
             file.transferTo(dest);
         } catch (IOException e) {
             log.error("上传图片失败: {}", e.getMessage());
             return null;
         }
-        return filePath;
+
+        log.info("文件上传成功，路径: {}", FILE_PATH + filePath);
+        return globalConfig.getServerUrl() + filePath;
     }
 
     /**

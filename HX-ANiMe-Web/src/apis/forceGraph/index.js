@@ -167,7 +167,7 @@ export const uploadImg = (userTableId, fileData, success, fail) => {
 	console.log(fileData);
 	Request.postFile(
 		currBaseUrl + "upload-img?userTableId=" + userTableId,
-		{file: fileData.file}
+		{file: fileData}
 	).then((data) => {
 		if (data) {
 			// 执行成功回调
