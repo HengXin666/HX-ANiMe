@@ -827,7 +827,7 @@ const closeAddNodeDialog = () => {
     addNodeDialogVisible.value = false;
 };
 
-// 测试添加结点
+/* // 测试添加结点
 const _addNodeTest = () => {
     const node: Node = {
         id: webkitDep.nodes.getMapList().length + 1,
@@ -839,7 +839,8 @@ const _addNodeTest = () => {
     };
     ElMessage.info("添加结点id:" + node.id);
     addNodeToChart(node);
-};
+}; 
+*/
 
 // 上传图片到后端, 获取到url
 const uploadImgFromNet = (cb: Function) => {
@@ -912,6 +913,9 @@ const updateNodeFromNet = (categoryId: number) => {
 
         // 刷新界面
         addNodeToChart(null);
+
+        // 关闭窗口 @TODO 这里不应该这样写, 但是偷懒了: 屎山 +1 
+        closeNodeUpDataDialog();
     }, () => {
 
     });
@@ -1123,10 +1127,9 @@ const openNodeUpDataDialog = (nodeId: number) => {
         nodeForm.value.category = it.category;
         inputUrl.value = it.img;
         nodeForm.value.describe = it.describe;
-
         // 保存当前结点的索引信息
         nowUpDataNodeId.value = nodeId;
-        categoriesSelectChange(it.categoryId);
+        categoriesSelectChange(it.category);
     } else {
         ElMessage.error("内部错误: 查询不到结点");
     }
@@ -1148,9 +1151,6 @@ const confirmUpDataNode = () => {
     function fun() {
         // 处理图例 & 修改结点
         updateCategoryAndNode(nodeForm.value.category, legendColor.value);
-
-        // 关闭窗口
-        closeNodeUpDataDialog();
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
