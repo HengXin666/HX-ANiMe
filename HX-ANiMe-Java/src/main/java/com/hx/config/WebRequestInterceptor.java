@@ -28,7 +28,8 @@ public class WebRequestInterceptor implements WebMvcConfigurer {
         // /test/queryUser接口则是token验证后，把token为xx的玩家信息放入Request中，方便接口拿取
         registry.addInterceptor(new RequestInterceptor())
                 .addPathPatterns("/**") // 所有请求
-                .excludePathPatterns("/login/**"); // 登录接口 不需要拦截
+                .excludePathPatterns("/login/**") // 登录接口 不需要拦截
+                .excludePathPatterns("/images/**"); // 图片接口 不需要拦截
     }
 
     /**

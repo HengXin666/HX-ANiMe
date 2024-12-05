@@ -19,4 +19,8 @@ public class GlobalConfig {
     // 服务器URL
     @Value("${server.url}")
     private String serverUrl;
+
+    // 文件路径
+    @Value("${file.path}")
+    private String filePath;
 }
