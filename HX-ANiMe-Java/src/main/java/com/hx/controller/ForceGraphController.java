@@ -175,7 +175,29 @@ public class ForceGraphController {
 
     // 删除结点
 
-    // 删除边
+    /**
+     * @description: 删除边
+     * @author: Heng_Xin
+     * @date: 2024/12/6 9:40
+     * @param: request
+     * @param: userTableId
+     * @param: edgeId
+     * @return: JsonVo<String>
+     **/
+    @PostMapping("/remove-edge")
+    public JsonVo<String> removeEdge(
+        HttpServletRequest request,
+        @RequestParam Long userTableId,
+        @RequestParam Long edgeId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("删除边 User ID: {}, User Name: {}, userTableId: {}, edgeId: {}", userId, userName, userTableId, edgeId);
+        if (!forceGraphService.removeEdge(userId, userTableId, edgeId)) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success("ok");
+    }
 
     // 删除图例
 

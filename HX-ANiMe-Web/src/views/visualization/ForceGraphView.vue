@@ -998,8 +998,6 @@ const confirmAddNode = () => {
         ElMessage.error("结点所属图例不能为空");
         return;
     }
-    // 在这里可以将数据提交到后端或在图表中添加节点
-    console.log("添加结点数据：", nodeForm.value);
 
     function fun() {
         // 处理图例 & 添加结点
@@ -1011,8 +1009,6 @@ const confirmAddNode = () => {
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
-    console.log(cachedFile.value);
-    console.log(nodeForm.value.imageUrl);
     if (cachedFile.value && nodeForm.value.imageUrl === "") {
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
@@ -1133,6 +1129,15 @@ const openNodeUpDataDialog = (nodeId: number) => {
     } else {
         ElMessage.error("内部错误: 查询不到结点");
     }
+
+    // 显示图片 (不支持, 因为这样多次加载了 (我不知道怎么改))
+    // if (inputUrl.value !== "") {
+        // api.getImg(inputUrl.value, (data: any) => {
+        //     console.log(data)
+        // }, () => {
+
+        // });
+    // }
 };
 
 // 关闭弹窗
@@ -1242,12 +1247,34 @@ const removeNodeLogic = () => {
 // === End === 修改结点逻辑 === End ===
 
 // === Begin === 删除边逻辑 === Begin ===
-// 异步删除节点API
+// 异步删除边API
 const removeEdge = async (id: number) => {
-    // TODO 向后端确认, 通过id进行删除, 删除成功的话, 继续执行
+    // 包装异步操作为 Promise
+    const apiCall = new Promise((resolve, reject) => {
+        api.delLink(
+            nowGraphId,
+            id,
+            (data: any) => {
+                // 成功回调
+                resolve(data);
+            },
+            (error: any) => {
+                // 失败回调
+                reject(error);
+            }
+        );
+    });
 
-    // 删除前端边
-    webkitDep.links.removeItem(id);
+    try {
+        // 等待回调完成
+        const result = await apiCall;
+        
+        // 删除前端边
+        webkitDep.links.removeItem(id);
+
+    } catch (error) {
+        console.error("删除失败：", error);
+    }
 };
 // === end === 删除边逻辑 === end ===
 

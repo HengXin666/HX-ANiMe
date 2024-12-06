@@ -75,4 +75,18 @@ public class EdgeDAO {
             userTableId
         );
     }
+
+    /**
+     * @description: 删除边, 返回删除行数
+     * @author: Heng_Xin
+     * @date: 2024/12/6 9:41
+     * @param: userId
+     * @param: userTableId
+     * @param: edgeId
+     * @return: int
+     **/
+    public int removeEdge(Long userId, Long userTableId, Long edgeId) {
+        String sql = "DELETE FROM Edges WHERE user_id = ? AND user_table_id = ? AND edge_id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId, edgeId);
+    }
 }

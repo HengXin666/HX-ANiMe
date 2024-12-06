@@ -232,4 +232,17 @@ public class ForceGraphService {
         nodeDO.setDescription(nodeDTO.getDescription());
         return nodeDAO.updateNode(nodeDO) > 0;
     }
+
+    /**
+     * @description: 删除边
+     * @author: Heng_Xin
+     * @date: 2024/12/6 9:40
+     * @param: userId
+     * @param: userTableId
+     * @param: edgeId
+     * @return: boolean
+     **/
+    public boolean removeEdge(Long userId, Long userTableId, Long edgeId) {
+        return edgeDAO.removeEdge(userId, userTableId, edgeId) > 0;
+    }
 }

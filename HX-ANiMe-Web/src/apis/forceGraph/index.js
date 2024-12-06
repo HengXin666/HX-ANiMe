@@ -185,6 +185,33 @@ export const uploadImg = (userTableId, fileData, success, fail) => {
 };
 
 /**
+ * 获取图片
+ * @param url 图片路径
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const getImg = (url, success, fail) => {
+	Request.request(
+		Request.GET,
+		url,
+		{}
+	).then((data) => {
+		if (data) {
+			// 执行成功回调
+			success(data.data);
+			return;
+		}
+		// 执行失败回调
+		fail();
+	}).catch((err) => {
+		// 打印错误信息
+		console.warn(err);
+		// 执行失败回调
+		fail();
+	});
+};
+
+/**
  * 修改结点
  * @param userTableId 当前表id
  * @param nodeData 图例数据
@@ -208,4 +235,33 @@ export const updateNode = (userTableId, nodeData, success, fail) => {
 			// 执行失败回调
 			fail();
 		});
+};
+
+/**
+ * 删除边
+ * @param userTableId 当前表id
+ * @param edgeId 边id
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const delLink = (userTableId, edgeId, success, fail) => {
+	Request.requestJson(
+		Request.POST, 
+		currBaseUrl + "remove-edge?userTableId=" + userTableId + "&edgeId=" + edgeId, 
+		{}
+	).then((data) => {
+		if (data) {
+			// 执行成功回调
+			success(data.data);
+			return;
+		}
+		// 执行失败回调
+		fail();
+	})
+	.catch((err) => {
+		// 打印错误信息
+		console.warn(err);
+		// 执行失败回调
+		fail();
+	});
 };
