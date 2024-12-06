@@ -245,4 +245,22 @@ public class ForceGraphService {
     public boolean removeEdge(Long userId, Long userTableId, Long edgeId) {
         return edgeDAO.removeEdge(userId, userTableId, edgeId) > 0;
     }
+
+    /**
+     * @description: 删除节点, 如果结点删除成功, 则删除该结点所对应的所有边
+     * @author: Heng_Xin
+     * @date: 2024/12/6 10:05
+     * @param: userId
+     * @param: userTableId
+     * @param: nodeId
+     * @return: boolean
+     **/
+    public boolean removeNode(Long userId, Long userTableId, Long nodeId) {
+        if (nodeDAO.removeNode(userId, userTableId, nodeId) <= 0) {
+            return false;
+        }
+        // 删除该结点所对应的所有边 (可能没有该边)
+        edgeDAO.removeAllEdge(userId, userTableId, nodeId);
+        return true;
+    }
 }

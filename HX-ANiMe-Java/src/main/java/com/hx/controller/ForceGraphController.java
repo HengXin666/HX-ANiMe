@@ -173,7 +173,29 @@ public class ForceGraphController {
         return JsonVo.success(res);
     }
 
-    // 删除结点
+    /**
+     * @description: 删除结点, 以及该结点所对应的所有边
+     * @author: Heng_Xin
+     * @date: 2024/12/6 10:09
+     * @param: request
+     * @param: userTableId
+     * @param: nodeId
+     * @return: JsonVo<String>
+     **/
+    @PostMapping("/remove-node")
+    public JsonVo<String> removeNode(
+        HttpServletRequest request,
+        @RequestParam Long userTableId,
+        @RequestParam Long nodeId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("删除结点 User ID: {}, User Name: {}, userTableId: {}, nodeId: {}", userId, userName, userTableId, nodeId);
+        if (!forceGraphService.removeNode(userId, userTableId, nodeId)) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success("ok");
+    }
 
     /**
      * @description: 删除边

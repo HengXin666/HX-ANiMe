@@ -1171,26 +1171,45 @@ const confirmUpDataNode = () => {
 
 // 异步删除结点api
 const removeNode = async (nodeId: number) => {
-    // 此处仅删除结点对结点和边集进行更新 (图例不删)
-    // TODO 让后端更新, 前端再同步结果
-    if (true) {
+    try {
+        // 将回调包装成 Promise
+        const apiCall = new Promise((resolve, reject) => {
+            api.delNode(
+                nowGraphId,
+                nodeId,
+                (data: any) => {
+                    // 成功回调
+                    resolve(data);
+                },
+                (error: any) => {
+                    // 失败回调
+                    reject(error);
+                }
+            );
+        });
+
+        // 等待后端返回结果
+        const result = await apiCall;
+
         // 删除结点
         webkitDep.nodes.removeItem(nodeId);
 
-        // 删除边
+        // 删除相关边
         let arr: [number, number][] = [];
-        webkitDep.links.getMapList().forEach(
-            (it, idx) => {
-                if (it.source === nodeId || it.target === nodeId) {
-                    arr.push([idx, it.id]);
-                }
+        webkitDep.links.getMapList().forEach((it, idx) => {
+            if (it.source === nodeId || it.target === nodeId) {
+                arr.push([idx, it.id]);
             }
-        );
+        });
         for (const [index, id] of arr) {
             webkitDep.links.removeItemByIndex(index, id);
         }
-    } else {
-        throw new Error('WIFI is not good');
+
+        console.log("结点和相关边删除成功：", result);
+        return result; // 可选，返回后端的结果
+    } catch (error) {
+        console.error("删除结点失败：", error);
+        throw error; // 继续抛出异常以便调用方处理
     }
 };
 

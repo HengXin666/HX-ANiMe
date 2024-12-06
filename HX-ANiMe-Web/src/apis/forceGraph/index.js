@@ -265,3 +265,32 @@ export const delLink = (userTableId, edgeId, success, fail) => {
 		fail();
 	});
 };
+
+/**
+ * 删除结点
+ * @param userTableId 当前表id
+ * @param nodeId 图例数据
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const delNode = (userTableId, nodeId, success, fail) => {
+	Request.requestJson(
+		Request.POST, 
+		currBaseUrl + "remove-node?userTableId=" + userTableId + "&nodeId=" + nodeId, 
+		{}
+	).then((data) => {
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		})
+		.catch((err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		});
+};

@@ -89,4 +89,18 @@ public class EdgeDAO {
         String sql = "DELETE FROM Edges WHERE user_id = ? AND user_table_id = ? AND edge_id = ?";
         return jdbcTemplate.update(sql, userId, userTableId, edgeId);
     }
+
+    /**
+     * @description: 删除所有与指定节点相连的边, 返回删除行数
+     * @author: Heng_Xin
+     * @date: 2024/12/6 10:06
+     * @param: userId
+     * @param: userTableId
+     * @param: nodeId
+     * @return: int
+     **/
+    public int removeAllEdge(Long userId, Long userTableId, Long nodeId) {
+        String sql = "DELETE FROM Edges WHERE user_id = ? AND user_table_id = ? AND (from_node_id = ? OR to_node_id = ?)";
+        return jdbcTemplate.update(sql, userId, userTableId, nodeId, nodeId);
+    }
 }
