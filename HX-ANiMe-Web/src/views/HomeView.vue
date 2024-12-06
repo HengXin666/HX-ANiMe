@@ -153,20 +153,20 @@ const changeThemeColor = (color: string) => {
 	align-items: center;
 	/* 垂直居中 */
 	position: relative;
-
+	
 	/* 设置边框 */
 	border-bottom: 1px solid var(--el-border-color);
 	background-color: #282828;
-
+	
 	.el-menu {
 		/* 菜单背景颜色 */
 		--el-menu-bg-color: #282828;
 		/* 菜单文字颜色 */
 		--el-menu-text-color: #f0f0f0;
-
+		
 		/* 菜单选择后的文字颜色 */
 		--active-text-color: var(--el-menu-active-color);
-
+		
 		/* 自定义鼠标悬浮时候的项的样式 */
 		.el-menu-item {
 			&:hover {
@@ -175,16 +175,16 @@ const changeThemeColor = (color: string) => {
 			}
 		}
 	}
-
+	
 	.row-wrapper {
 		overflow-x: hidden;
 	}
-
+	
 	/* 去掉router-link的下划线 */
 	a {
 		text-decoration: none;
 	}
-
+	
 	.router-link-active {
 		text-decoration: none;
 	}

@@ -1,165 +1,185 @@
 <template>
-    <div>
-        <div ref="chart" style="height: calc(100vh - 60px);"></div>
-
-        <!-- 固定在右下角的按钮组 -->
-        <div style="position: fixed; right: 30px; bottom: 10px;">
-            <el-tooltip content="重置位置" placement="top">
-                <el-button circle title="重置" size="large" :icon="RefreshRight" @click="resetPosition"
-                    style="margin-bottom: 10px;" />
-            </el-tooltip>
-            <el-tooltip content="添加结点" placement="top">
-                <el-button circle title="添加" size="large" :icon="Plus" @click="openAddNodeDialog"
-                    style="margin-bottom: 10px;" />
-            </el-tooltip>
-            <el-tooltip content="设置" placement="top">
-                <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings"
-                    style="margin-bottom: 10px;" />
-            </el-tooltip>
-        </div>
-
-        <!-- 可拖动的弹出窗口: 添加结点 -->
-        <el-dialog v-model="addNodeDialogVisible" title="添加结点" :draggable="true" width="550px">
-            <div v-if="addNodeAdvancedOptions" class="dialog-add-node">
-                <el-form-item label="Secret API Key">
-                    <div style="display: flex; align-items: center; width: 100%;">
-                        <el-input v-model="apiKey" readonly style="margin-right: 10px;" />
-                        <el-icon @click="copyApiKey" style="right: 35px;">
-                            <DocumentCopy />
-                        </el-icon>
-                        <el-button @click="fetchApiKey">获取</el-button>
+    <el-container>
+        <!-- 左侧滚动栏 -->
+        <el-aside class="chart-list">
+            <el-scrollbar>
+                <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
+                    <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
+                    <div class="chart-info">
+                        <h3 class="chart-name">{{ chart.name }}</h3>
+                        <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
                     </div>
-                </el-form-item>
-            </div>
-            <div v-else class="dialog-add-node">
-                <!-- 结点名称输入框 -->
-                <el-form :model="nodeForm" label-width="80">
-                    <el-form-item label="结点名称">
-                        <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
-                    </el-form-item>
+                </div>
+            </el-scrollbar>
+        </el-aside>
 
-                    <!-- 结点类型下拉选择框或输入框以及其颜色 -->
-                    <el-form-item label="所属图例">
-                        <div style="display: flex; align-items: center; width: 100%;">
-                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
-                                :predefine="predefineColors" />
-                            <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
-                                @change="categoriesSelectChange">
-                                <el-option v-for="item in categoriesNameList" :key="item" :label="item"
-                                    :value="item"></el-option>
-                            </el-select>
-                        </div>
-                    </el-form-item>
+        <!-- 主内容区域 -->
+        <el-main>
+            <div>
+                <div ref="chart" style="height: calc(100vh - 60px);"></div>
 
-                    <!-- 输入框 -->
-                    <el-form-item label="图片URL">
-                        <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
-                            @paste="handlePaste" />
-                    </el-form-item>
+                <!-- 固定在右下角的按钮组 -->
+                <div style="position: fixed; right: 30px; bottom: 10px;">
+                    <el-tooltip content="重置位置" placement="top">
+                        <el-button circle title="重置" size="large" :icon="RefreshRight" @click="resetPosition"
+                            style="margin-bottom: 10px;" />
+                    </el-tooltip>
+                    <el-tooltip content="添加结点" placement="top">
+                        <el-button circle title="添加" size="large" :icon="Plus" @click="openAddNodeDialog"
+                            style="margin-bottom: 10px;" />
+                    </el-tooltip>
+                    <el-tooltip content="设置" placement="top">
+                        <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings"
+                            style="margin-bottom: 10px;" />
+                    </el-tooltip>
+                </div>
 
-                    <el-form-item>
-                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
-                            raw-content placement="left">
-                            <!-- 结点图片上传 -->
-                            <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
-                                :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
-                                :accept="'image/*'">
-                                <!-- 图片显示框 -->
-                                <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
-                                <div v-else class="image-preview empty">
-                                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                                    <div class="el-upload__text">
-                                        拖拽图片到此处或 <em>点击上传</em>
-                                    </div>
+                <!-- 可拖动的弹出窗口: 添加结点 -->
+                <el-dialog v-model="addNodeDialogVisible" title="添加结点" :draggable="true" width="550px">
+                    <div v-if="addNodeAdvancedOptions" class="dialog-add-node">
+                        <el-form-item label="Secret API Key">
+                            <div style="display: flex; align-items: center; width: 100%;">
+                                <el-input v-model="apiKey" readonly style="margin-right: 10px;" />
+                                <el-icon @click="copyApiKey" style="right: 35px;">
+                                    <DocumentCopy />
+                                </el-icon>
+                                <el-button @click="fetchApiKey">获取</el-button>
+                            </div>
+                        </el-form-item>
+                    </div>
+                    <div v-else class="dialog-add-node">
+                        <!-- 结点名称输入框 -->
+                        <el-form :model="nodeForm" label-width="80">
+                            <el-form-item label="结点名称">
+                                <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
+                            </el-form-item>
+
+                            <!-- 结点类型下拉选择框或输入框以及其颜色 -->
+                            <el-form-item label="所属图例">
+                                <div style="display: flex; align-items: center; width: 100%;">
+                                    <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
+                                        :predefine="predefineColors" />
+                                    <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable
+                                        allow-create @change="categoriesSelectChange">
+                                        <el-option v-for="item in categoriesNameList" :key="item" :label="item"
+                                            :value="item"></el-option>
+                                    </el-select>
                                 </div>
-                            </el-upload>
-                        </el-tooltip>
-                    </el-form-item>
+                            </el-form-item>
 
-                    <el-form-item label="结点描述">
-                        <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
-                    </el-form-item>
-                </el-form>
-            </div>
+                            <!-- 输入框 -->
+                            <el-form-item label="图片URL">
+                                <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
+                                    @paste="handlePaste" />
+                            </el-form-item>
 
-            <!-- 底部按钮组 -->
-            <template #footer>
-                <!-- 高级按钮靠左并带有图标 -->
-                <el-button style="float: left; color: #409EFF; font-weight: bold;"
-                    @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{ addNodeAdvancedOptions ? "简单添加" :
-                        "高级选项" }}</el-button>
+                            <el-form-item>
+                                <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
+                                    raw-content placement="left">
+                                    <!-- 结点图片上传 -->
+                                    <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
+                                        :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
+                                        :accept="'image/*'">
+                                        <!-- 图片显示框 -->
+                                        <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
+                                        <div v-else class="image-preview empty">
+                                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                            <div class="el-upload__text">
+                                                拖拽图片到此处或 <em>点击上传</em>
+                                            </div>
+                                        </div>
+                                    </el-upload>
+                                </el-tooltip>
+                            </el-form-item>
 
-                <!-- 取消和确认按钮靠右 -->
-                <el-button @click="closeAddNodeDialog">取消</el-button>
-                <el-button type="primary" @click="confirmAddNode">确认</el-button>
-            </template>
-        </el-dialog>
+                            <el-form-item label="结点描述">
+                                <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
+                            </el-form-item>
+                        </el-form>
+                    </div>
 
-        <!-- 可拖动的弹出窗口: 修改结点 -->
-        <el-dialog v-model="nodeUpDataDialogVisible" title="修改结点" :draggable="true" width="550px"
-            @close="closeNodeUpDataDialog">
-            <div class="dialog-add-node">
-                <!-- 结点名称输入框 -->
-                <el-form :model="nodeForm" label-width="80">
-                    <el-form-item label="结点名称">
-                        <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
-                    </el-form-item>
+                    <!-- 底部按钮组 -->
+                    <template #footer>
+                        <!-- 高级按钮靠左并带有图标 -->
+                        <el-button style="float: left; color: #409EFF; font-weight: bold;"
+                            @click="addNodeAdvancedOptions = !addNodeAdvancedOptions">{{ addNodeAdvancedOptions ? "简单添加"
+                                :
+                                "高级选项" }}</el-button>
 
-                    <!-- 结点类型下拉选择框或输入框以及其颜色 -->
-                    <el-form-item label="所属图例">
-                        <div style="display: flex; align-items: center; width: 100%;">
-                            <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
-                                :predefine="predefineColors" />
-                            <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable allow-create
-                                @change="categoriesSelectChange">
-                                <el-option v-for="item in categoriesNameList" :key="item" :label="item"
-                                    :value="item"></el-option>
-                            </el-select>
-                        </div>
-                    </el-form-item>
+                        <!-- 取消和确认按钮靠右 -->
+                        <el-button @click="closeAddNodeDialog">取消</el-button>
+                        <el-button type="primary" @click="confirmAddNode">确认</el-button>
+                    </template>
+                </el-dialog>
 
-                    <!-- 输入框 -->
-                    <el-form-item label="图片URL">
-                        <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
-                            @paste="handlePaste" />
-                    </el-form-item>
+                <!-- 可拖动的弹出窗口: 修改结点 -->
+                <el-dialog v-model="nodeUpDataDialogVisible" title="修改结点" :draggable="true" width="550px"
+                    @close="closeNodeUpDataDialog">
+                    <div class="dialog-add-node">
+                        <!-- 结点名称输入框 -->
+                        <el-form :model="nodeForm" label-width="80">
+                            <el-form-item label="结点名称">
+                                <el-input v-model="nodeForm.name" placeholder="请输入结点名称"></el-input>
+                            </el-form-item>
 
-                    <el-form-item>
-                        <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
-                            raw-content placement="left">
-                            <!-- 结点图片上传 -->
-                            <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
-                                :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
-                                :accept="'image/*'">
-                                <!-- 图片显示框 -->
-                                <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
-                                <div v-else class="image-preview empty">
-                                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                                    <div class="el-upload__text">
-                                        拖拽图片到此处或 <em>点击上传</em>
-                                    </div>
+                            <!-- 结点类型下拉选择框或输入框以及其颜色 -->
+                            <el-form-item label="所属图例">
+                                <div style="display: flex; align-items: center; width: 100%;">
+                                    <el-color-picker style="margin-right: 10px;" v-model="legendColor" show-alpha
+                                        :predefine="predefineColors" />
+                                    <el-select v-model="nodeForm.category" placeholder="请选择结点所属图例" filterable
+                                        allow-create @change="categoriesSelectChange">
+                                        <el-option v-for="item in categoriesNameList" :key="item" :label="item"
+                                            :value="item"></el-option>
+                                    </el-select>
                                 </div>
-                            </el-upload>
-                        </el-tooltip>
-                    </el-form-item>
+                            </el-form-item>
 
-                    <el-form-item label="结点描述">
-                        <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
-                    </el-form-item>
-                </el-form>
+                            <!-- 输入框 -->
+                            <el-form-item label="图片URL">
+                                <el-input v-model="inputUrl" placeholder="输入图片URL或粘贴图片到此处" @change="updateImageUrl"
+                                    @paste="handlePaste" />
+                            </el-form-item>
+
+                            <el-form-item>
+                                <el-tooltip content="输入URL和上传文件<span style='color: red; font-size: 16px;'>二选一</span>"
+                                    raw-content placement="left">
+                                    <!-- 结点图片上传 -->
+                                    <el-upload drag class="image-uploader" :limit="1" :auto-upload="false"
+                                        :show-file-list="false" :on-change="updateImage" :on-exceed="updateImageExceed"
+                                        :accept="'image/*'">
+                                        <!-- 图片显示框 -->
+                                        <el-image :src="imageUrl" fit="contain" class="image-preview" v-if="imageUrl" />
+                                        <div v-else class="image-preview empty">
+                                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                            <div class="el-upload__text">
+                                                拖拽图片到此处或 <em>点击上传</em>
+                                            </div>
+                                        </div>
+                                    </el-upload>
+                                </el-tooltip>
+                            </el-form-item>
+
+                            <el-form-item label="结点描述">
+                                <el-input v-model="nodeForm.describe" placeholder="请输入结点描述"></el-input>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+
+                    <!-- 底部按钮组 -->
+                    <template #footer>
+                        <!-- 删除结点按钮 -->
+                        <el-button style="float: left; color: red; font-weight: bold;"
+                            @click="removeNodeLogic">删除结点</el-button>
+
+                        <!-- 取消和确认按钮靠右 -->
+                        <el-button @click="closeNodeUpDataDialog">取消</el-button>
+                        <el-button type="primary" @click="confirmUpDataNode">确认</el-button>
+                    </template>
+                </el-dialog>
             </div>
-
-            <!-- 底部按钮组 -->
-            <template #footer>
-                <!-- 删除结点按钮 -->
-                <el-button style="float: left; color: red; font-weight: bold;" @click="removeNodeLogic">删除结点</el-button>
-
-                <!-- 取消和确认按钮靠右 -->
-                <el-button @click="closeNodeUpDataDialog">取消</el-button>
-                <el-button type="primary" @click="confirmUpDataNode">确认</el-button>
-            </template>
-        </el-dialog>
-    </div>
+        </el-main>
+    </el-container>
 </template>
 
 <script setup lang="ts">
@@ -243,6 +263,49 @@ const webkitDep = {
 };
 
 // === End === 图表数据 === End ===
+
+// === Begin === 左侧边栏数据 === Begin ===
+
+// 左侧图表列表
+const charts = ref<Array<{ id: number; iconUrl: string; name: string; description: string }>>([]);
+
+// 从后端加载图表数据
+const loadCharts = () => {
+    // 模拟从后端获取数据
+    charts.value = [
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
+    ];
+};
+
+loadCharts();
+
+// 提取描述的第一句话
+const getFirstSentence = (content: string) => {
+    try {
+        return content.slice(0, 16) + (content.length > 16 ? "..." : "");
+    } catch {
+        return "无效的内容格式";
+    }
+};
+
+const handleChartClick = (id: number) => {
+    console.log(`点击图表 ID: ${id}`);
+    // 这里调用后端接口，根据 ID 获取详细信息
+};
+
+// === End === 左侧边栏数据 === End ===
+
 
 // === Begin === 网络加载数据 (init) === Begin ===
 
@@ -415,7 +478,7 @@ onMounted(async () => {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
-        
+
         const nodeData = await createForceNodeData(); // 获取节点数据
 
         // 网络加载
@@ -498,7 +561,7 @@ onMounted(async () => {
             myChart.value?.hideLoading(); // 隐藏加载动画
             myChart.value?.setOption(option); // 设置图表选项
         });
-        
+
         // 窗口调整时图表自适应
         window.addEventListener('resize', () => {
             myChart.value?.resize();
@@ -999,7 +1062,7 @@ const confirmAddNode = () => {
         return;
     }
 
-    function fun() {
+    function fun () {
         // 处理图例 & 添加结点
         addCategoryAndNode(nodeForm.value.category, legendColor.value);
 
@@ -1132,11 +1195,11 @@ const openNodeUpDataDialog = (nodeId: number) => {
 
     // 显示图片 (不支持, 因为这样多次加载了 (我不知道怎么改))
     // if (inputUrl.value !== "") {
-        // api.getImg(inputUrl.value, (data: any) => {
-        //     console.log(data)
-        // }, () => {
+    // api.getImg(inputUrl.value, (data: any) => {
+    //     console.log(data)
+    // }, () => {
 
-        // });
+    // });
     // }
 };
 
@@ -1153,14 +1216,12 @@ const closeNodeUpDataDialog = () => {
 
 // 修改结点
 const confirmUpDataNode = () => {
-    function fun() {
+    function fun () {
         // 处理图例 & 修改结点
         updateCategoryAndNode(nodeForm.value.category, legendColor.value);
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
-    console.log(cachedFile.value);
-    console.log(nodeForm.value.imageUrl);
     if (cachedFile.value && nodeForm.value.imageUrl === "") {
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
@@ -1205,7 +1266,6 @@ const removeNode = async (nodeId: number) => {
             webkitDep.links.removeItemByIndex(index, id);
         }
 
-        console.log("结点和相关边删除成功：", result);
         return result; // 可选，返回后端的结果
     } catch (error) {
         console.error("删除结点失败：", error);
@@ -1287,7 +1347,7 @@ const removeEdge = async (id: number) => {
     try {
         // 等待回调完成
         const result = await apiCall;
-        
+
         // 删除前端边
         webkitDep.links.removeItem(id);
 
@@ -1301,6 +1361,55 @@ const removeEdge = async (id: number) => {
 </script>
 
 <style lang="scss">
+/* 左侧滚动栏样式 */
+.chart-list {
+    width: 200px;
+    padding: 10px;
+    background-color: #171717;
+    --el-border-color: #0000;
+}
+
+.chart-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--el-menu-active-color);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+}
+
+.chart-item:hover {
+    background-color: #ff066521;
+    transform: scale(1.02);
+}
+
+.chart-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.chart-info {
+    flex: 1;
+}
+
+.chart-name {
+    color: var(--el-menu-active-color);
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 5px;
+}
+
+.chart-description {
+    font-size: 12px;
+    color: #909399;
+    margin: 0;
+}
+
+// 主界面
 .dialog-add-node {
     display: flex;
     flex-direction: column;
