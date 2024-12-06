@@ -844,9 +844,7 @@ const _addNodeTest = () => {
 
 // 上传图片到后端, 获取到url
 const uploadImgFromNet = (cb: Function) => {
-    // 这个接口有问题，不能上传图片!!!
     api.uploadImg(nowGraphId, cachedFile.value, (url: any) => {
-        console.log(url);
         nodeForm.value.imageUrl = cloneDeep(url);
         cachedFile.value = null;
         cb();
@@ -907,7 +905,7 @@ const updateNodeFromNet = (categoryId: number) => {
         if (it) {
             it.name = cloneDeep(nodeForm.value.name);
             it.category = cloneDeep(nodeForm.value.category);
-            it.img = cloneDeep(inputUrl.value);
+            it.img = cloneDeep(node.img);
             it.describe = cloneDeep(nodeForm.value.describe);
         }
 

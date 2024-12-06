@@ -19,11 +19,7 @@ export default defineConfig({
         changeOrigin: true,
         target: 'http://localhost:28205',
         rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-      '/images': {
-        target: 'http://127.0.0.1:28205', // 后端地址
-        changeOrigin: true, // 修改请求来源为目标地址
-      },
+      }
     }    
   }
 });
