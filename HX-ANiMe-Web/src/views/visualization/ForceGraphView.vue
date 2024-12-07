@@ -297,6 +297,11 @@ const charts = ref<Array<{ id: number; iconUrl: string; name: string; descriptio
 // 侧边栏显示切换开关
 const switchSidebarDisplay = () => {
     isSidebarDisplay.value = !isSidebarDisplay.value;
+
+    // 更新图的大小
+    window.setTimeout(() => {
+        myChart.value?.resize();
+    }, 100);
 };
 
 // 从后端加载图表数据
