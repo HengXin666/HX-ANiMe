@@ -1,17 +1,40 @@
 <template>
     <el-container>
-        <!-- 左侧滚动栏 -->
-        <el-aside class="chart-list">
-            <el-scrollbar>
-                <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
-                    <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
-                    <div class="chart-info">
-                        <h3 class="chart-name">{{ chart.name }}</h3>
-                        <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
+        <div :class="isSidebarDisplay ? '' : 'chart-list-no-open'">
+            <!-- 顶部按钮 -->
+            <div>
+                <el-row align="middle" justify="space-between"
+                    style="height: 50px; padding: 10px; background-color: #171717;">
+                    <!-- 左侧按钮: 收起 -->
+                    <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+
+                    <!-- 右侧按钮: 添加图表 -->
+                    <el-button type="primary" :icon="Edit" circle></el-button>
+                </el-row>
+            </div>
+
+            <!-- 左侧滚动栏 -->
+            <el-aside class="chart-list">
+                <el-scrollbar>
+                    <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
+                        <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
+                        <div class="chart-info">
+                            <h3 class="chart-name">{{ chart.name }}</h3>
+                            <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
+                        </div>
                     </div>
-                </div>
-            </el-scrollbar>
-        </el-aside>
+                </el-scrollbar>
+            </el-aside>
+        </div>
+
+        <div v-if="!isSidebarDisplay" class="chart-list-show-btn">
+            <el-row align="middle" justify="space-between"
+                class="chart-list-fixed">
+                <!-- 左侧按钮: 收起 -->
+                <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+            </el-row>
+        </div>
+
 
         <!-- 主内容区域 -->
         <el-main>
@@ -190,7 +213,7 @@ import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import * as api from '@/apis/forceGraph';
-import { RefreshRight, Plus, Setting, DocumentCopy } from '@element-plus/icons-vue';
+import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -265,14 +288,81 @@ const webkitDep = {
 // === End === 图表数据 === End ===
 
 // === Begin === 左侧边栏数据 === Begin ===
+// 是否显示侧边栏
+const isSidebarDisplay = ref(true);
 
 // 左侧图表列表
 const charts = ref<Array<{ id: number; iconUrl: string; name: string; description: string }>>([]);
+
+// 侧边栏显示切换开关
+const switchSidebarDisplay = () => {
+    isSidebarDisplay.value = !isSidebarDisplay.value;
+};
 
 // 从后端加载图表数据
 const loadCharts = () => {
     // 模拟从后端获取数据
     charts.value = [
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
+        {
+            id: 1,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表1",
+            description: "这是第一个图表的简介。1111111111111",
+        },
+        {
+            id: 2,
+            iconUrl: "https://via.placeholder.com/50",
+            name: "图表2",
+            description: "这是第二个图表的简介。",
+        },
         {
             id: 1,
             iconUrl: "https://via.placeholder.com/50",
@@ -1361,19 +1451,52 @@ const removeEdge = async (id: number) => {
 </script>
 
 <style lang="scss">
+/* 显示 按钮样式 */
+.chart-list-fixed {
+    height: 50px; 
+    position: fixed;
+    left: 10px; /* 调整按钮靠左或其他位置 */
+    z-index: 1000; /* 保证按钮浮在其他内容上 */
+    background-color: transparent;
+    box-shadow: none; /* 去掉默认的阴影效果 */
+}
+
+.chart-list-show-btn .el-button {
+    background-color: transparent !important; /* 按钮背景透明 */
+    border: none !important; /* 去掉按钮边框 */
+    color: #ffffff; /* 设置图标颜色 */
+}
+
+.chart-list-show-btn .el-button:hover {
+    background-color: rgba(255, 255, 255, 0.049) !important; /* 鼠标悬浮时的效果 */
+    color: var(--el-menu-active-color); /* 鼠标悬浮时的图标颜色 */
+}
+
 /* 左侧滚动栏样式 */
 .chart-list {
-    width: 200px;
+    width: 240px;
+    height: calc(100vh - 60px - 50px);
     padding: 10px;
     background-color: #171717;
-    --el-border-color: #0000;
+    --el-border-color: #000;
+}
+
+
+.chart-list-no-open {
+    width: 0px;
+    display: none;
+    height: calc(100vh - 60px - 50px);
+    padding: 10px;
+    background-color: #171717;
+    --el-border-color: #000;
+    transition: all 0.5s ease;
 }
 
 .chart-item {
     display: flex;
     align-items: center;
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 12px;
+    margin: 16px;
     border: 1px solid var(--el-menu-active-color);
     border-radius: 5px;
     cursor: pointer;
