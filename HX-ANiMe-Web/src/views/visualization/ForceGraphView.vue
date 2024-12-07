@@ -1,31 +1,34 @@
 <template>
     <el-container>
-        <div :class="isSidebarDisplay ? '' : 'chart-list-no-open'">
-            <!-- 顶部按钮 -->
-            <div>
-                <el-row align="middle" justify="space-between"
-                    style="height: 50px; padding: 10px; background-color: #171717;">
-                    <!-- 左侧按钮: 收起 -->
-                    <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+        <transition name="chart-list">
+            <!-- 侧边栏内容 -->
+            <div v-if="isSidebarDisplay" class="chart-list">
+                <!-- 顶部按钮 -->
+                <div>
+                    <el-row align="middle" justify="space-between"
+                        style="height: 50px; padding: 10px; background-color: #171717;">
+                        <!-- 左侧按钮: 收起 -->
+                        <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
 
-                    <!-- 右侧按钮: 添加图表 -->
-                    <el-button type="primary" :icon="Edit" circle></el-button>
-                </el-row>
-            </div>
+                        <!-- 右侧按钮: 添加图表 -->
+                        <el-button type="primary" :icon="Edit" circle></el-button>
+                    </el-row>
+                </div>
 
-            <!-- 左侧滚动栏 -->
-            <el-aside class="chart-list">
-                <el-scrollbar>
-                    <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
-                        <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
-                        <div class="chart-info">
-                            <h3 class="chart-name">{{ chart.name }}</h3>
-                            <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
+                <!-- 左侧滚动栏 -->
+                <el-aside class="chart-list">
+                    <el-scrollbar>
+                        <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
+                            <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
+                            <div class="chart-info">
+                                <h3 class="chart-name">{{ chart.name }}</h3>
+                                <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
+                            </div>
                         </div>
-                    </div>
-                </el-scrollbar>
-            </el-aside>
-        </div>
+                    </el-scrollbar>
+                </el-aside>
+            </div>
+        </transition>
 
         <div v-if="!isSidebarDisplay" class="chart-list-show-btn">
             <el-row align="middle" justify="space-between"
@@ -301,7 +304,10 @@ const switchSidebarDisplay = () => {
     // 更新图的大小
     window.setTimeout(() => {
         myChart.value?.resize();
-    }, 100);
+        const option = myChart.value?.getOption(); // 获取当前配置
+        option.series[0].center = ['50%', '50%']; // 设置为居中
+        myChart.setOption(option); // 重新渲染
+    }, 550);
 };
 
 // 从后端加载图表数据
@@ -1456,6 +1462,19 @@ const removeEdge = async (id: number) => {
 </script>
 
 <style lang="scss">
+/* 侧边栏显示的动画效果 */
+.chart-list-enter-active, .chart-list-leave-active {
+    transition: all 0.5s ease; /* 动画持续时间 */
+}
+.chart-list-enter-from, .chart-list-leave-to {
+    transform: translateX(-100%); /* 隐藏状态 */
+    opacity: 0;
+}
+.chart-list-enter-to, .chart-list-leave-from {
+    transform: translateX(0); /* 显示状态 */
+    opacity: 1;
+}
+
 /* 显示 按钮样式 */
 .chart-list-fixed {
     height: 50px; 
@@ -1481,7 +1500,6 @@ const removeEdge = async (id: number) => {
 .chart-list {
     width: 240px;
     height: calc(100vh - 60px - 50px);
-    padding: 10px;
     background-color: #171717;
     --el-border-color: #000;
 }
