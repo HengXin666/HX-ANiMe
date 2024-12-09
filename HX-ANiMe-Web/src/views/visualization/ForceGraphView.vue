@@ -297,6 +297,8 @@ const isSidebarDisplay = ref(true);
 // 左侧图表列表
 const charts = ref<Array<{ id: number; iconUrl: string; name: string; description: string }>>([]);
 
+// TODO 记录当前打开的是哪一个图表, 并且高亮显示
+
 // 侧边栏显示切换开关
 const switchSidebarDisplay = () => {
     isSidebarDisplay.value = !isSidebarDisplay.value;
@@ -400,9 +402,13 @@ const getFirstSentence = (content: string) => {
     }
 };
 
+/**
+ * 点击图表事件
+ * @param id 
+ */
 const handleChartClick = (id: number) => {
     console.log(`点击图表 ID: ${id}`);
-    // 这里调用后端接口，根据 ID 获取详细信息
+    // 这里调用后端接口, 根据 ID 获取详细信息
 };
 
 // === End === 左侧边栏数据 === End ===
