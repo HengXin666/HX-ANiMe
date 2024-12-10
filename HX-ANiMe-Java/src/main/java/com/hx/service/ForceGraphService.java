@@ -280,7 +280,7 @@ public class ForceGraphService {
         List<UserTablesDO> userTablesDOList = userTablesDAO.queryUserTables(userId);
         return userTablesDOList.stream().map(userTablesDO -> {
             UserTablesDTO userTablesDTO = new UserTablesDTO();
-            userTablesDTO.setId(userTablesDO.getUserId());
+            userTablesDTO.setId(userTablesDO.getId());
             userTablesDTO.setName(userTablesDO.getName());
             userTablesDTO.setImgUrl(userTablesDO.getImgUrl());
             userTablesDTO.setDescription(userTablesDO.getDescription());

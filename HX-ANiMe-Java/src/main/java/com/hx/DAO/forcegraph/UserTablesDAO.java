@@ -36,10 +36,10 @@ public class UserTablesDAO {
             sql,
             (rs, rowNum) -> {
                 UserTablesDO userTables = new UserTablesDO();
-                userTables.setId(rs.getLong("user_table_id"));
+                userTables.setId(rs.getLong("id"));
                 userTables.setUserId(rs.getLong("user_id"));
-                userTables.setName(rs.getString("table_name"));
-                userTables.setImgUrl(rs.getString("icon_url"));
+                userTables.setName(rs.getString("name"));
+                userTables.setImgUrl(rs.getString("img_url"));
                 userTables.setDescription(rs.getString("description"));
                 return userTables;
             },
@@ -55,7 +55,7 @@ public class UserTablesDAO {
      * @return: Long
      **/
     public Long addUserTables(UserTablesDO userTablesDO) {
-        String sql = "INSERT INTO user_tables (user_id, table_name, icon_url, description) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO user_tables (user_id, name, img_url, description) VALUES (?, ?, ?, ?)";
         // 使用 KeyHolder 获取自增主键
         KeyHolder keyHolder = new GeneratedKeyHolder();
 

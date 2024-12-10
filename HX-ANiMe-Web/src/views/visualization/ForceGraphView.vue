@@ -19,12 +19,13 @@
                 <!-- 左侧滚动栏 -->
                 <el-aside class="chart-list">
                     <el-scrollbar>
-                        <div v-for="chart in graphList" :key="chart.id" class="chart-item"
-                            @click="handleChartClick(chart.id)">
-                            <el-image :src="chart.imgUrl" fit="cover" class="chart-icon" />
+                        <div v-for="it in graphList" :key="it.id"
+                            :class="[it.id == nowGraphId ? 'chart-item-now' : 'chart-item']"
+                            @click="handleChartClick(it.id)">
+                            <el-image :src="it.imgUrl" fit="cover" class="chart-icon" />
                             <div class="chart-info">
-                                <h3 class="chart-name">{{ chart.name }}</h3>
-                                <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
+                                <h3 class="chart-name">{{ it.name }}</h3>
+                                <p class="chart-description">{{ getFirstSentence(it.description) }}</p>
                             </div>
                         </div>
                     </el-scrollbar>
@@ -357,7 +358,7 @@ const addGraph = () => {
             style: "width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
         }, [
             h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
-                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "名称: "),
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "图表名称: "),
                 h("input", {
                     style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
                     value: formData.name,
@@ -415,6 +416,17 @@ const addGraph = () => {
                     ElMessage.error("名称为必填项!");
                     return;
                 }
+                api.addUserTable({
+                    id: 0,
+                    ...formData
+                }, (id: number) => {
+                    graphList.value.push({
+                        id: id,
+                        ...formData
+                    })
+                }, () => {
+
+                });
                 console.log("表单数据：", formData);
                 ElMessage.success("添加成功!");
             }
@@ -427,7 +439,7 @@ const addGraph = () => {
  * @param id 
  */
 const handleChartClick = (id: number) => {
-    console.log(`点击图表 ID: ${id}`);
+    ElMessage.success(`点击图表 ID: ${id}`);
     // 这里调用后端接口, 根据 ID 获取详细信息
 };
 
@@ -1567,7 +1579,20 @@ const removeEdge = async (id: number) => {
     transition: all 0.5s ease;
 }
 
-.chart-item:hover {
+.chart-item-now {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin: 16px;
+    border: 1px solid var(--el-menu-active-color);
+    background-color: #ff066521;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+}
+
+.chart-item:hover,
+.chart-item-now:hover {
     background-color: #ff066521;
     transform: scale(1.02);
 }
