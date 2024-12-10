@@ -20,9 +20,15 @@
                 <el-aside class="chart-list">
                     <el-scrollbar>
                         <div v-for="it in graphList" :key="it.id"
-                            :class="[it.id == nowGraphId ? 'chart-item-now' : 'chart-item']"
+                            :class="[it.id === nowGraphId ? 'chart-item-now' : 'chart-item']"
                             @click="handleChartClick(it.id)">
-                            <el-image :src="it.imgUrl" fit="cover" class="chart-icon" />
+                            <el-image v-if="it.imgUrl" :src="it.imgUrl" loading="lazy" fit="cover" class="chart-icon">
+                                <template #error>
+                                    <el-icon class="chart-icon">
+                                        <Picture />
+                                    </el-icon>
+                                </template>
+                            </el-image>
                             <div class="chart-info">
                                 <h3 class="chart-name">{{ it.name }}</h3>
                                 <p class="chart-description">{{ getFirstSentence(it.description) }}</p>
@@ -39,7 +45,6 @@
                 <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
             </el-row>
         </div>
-
 
         <!-- 主内容区域 -->
         <el-main>
@@ -211,14 +216,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onBeforeUnmount, markRaw, h } from 'vue';
+import { ref, onMounted, onBeforeUnmount, markRaw, h } from 'vue';
 import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
 import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import * as api from '@/apis/forceGraph';
-import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled } from '@element-plus/icons-vue';
+import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled, Picture } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -278,7 +283,7 @@ const _linksData: Link[] = [];
 ];
 
 // 当前图的id
-let nowGraphId = -1;
+const nowGraphId = ref(-1);
 
 // 创建 SyncArrayMap 实例
 const webkitDep = {
@@ -323,7 +328,7 @@ const loadCharts = async () => {
                 graphList.value.push(it);
             }
             if (graphList.value.length > 0) {
-                nowGraphId = graphList.value[0].id;
+                nowGraphId.value = graphList.value[0].id;
             }
             resolve(data);
         }, () => {
@@ -441,6 +446,8 @@ const addGraph = () => {
 const handleChartClick = (id: number) => {
     ElMessage.success(`点击图表 ID: ${id}`);
     // 这里调用后端接口, 根据 ID 获取详细信息
+    nowGraphId.value = id;
+    getAllChartData();
 };
 
 // === End === 左侧边栏数据 === End ===
@@ -450,7 +457,7 @@ const handleChartClick = (id: number) => {
 
 // 异步初始化图表数据
 const initCategory = (cb: any) => {
-    api.getCategory(nowGraphId, (data: any) => {
+    api.getCategory(nowGraphId.value, (data: any) => {
         const categoriesData: Category[] = [];
         for (const it of data) {
             categoriesData.push({
@@ -470,7 +477,7 @@ const initCategory = (cb: any) => {
 
 // 异步初始化结点数据
 const initNodes = () => {
-    api.getNodes(nowGraphId, (data: any) => {
+    api.getNodes(nowGraphId.value, (data: any) => {
         const nodesData: Node[] = [];
         for (const it of data) {
             nodesData.push({
@@ -493,7 +500,7 @@ const initNodes = () => {
 
 // 异步初始化边数据
 const initLinks = () => {
-    api.getLinks(nowGraphId, (data: any) => {
+    api.getLinks(nowGraphId.value, (data: any) => {
         const linksData: Link[] = [];
         for (const it of data) {
             linksData.push({
@@ -611,95 +618,103 @@ const createStaticNodeDataFromForce = async () => {
     }));
 };
 
+/**
+ * 加载整个图表, 根据当前图表id (会显示加载动画)
+ */
+const getAllChartData = async () => {
+    myChart.value?.showLoading(); // 显示加载动画
+    const nodeData = await createForceNodeData(); // 获取节点数据
+
+    // 网络加载
+    initCategory(() => {
+        // 图表配置
+        const option = {
+            color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
+            legend: {
+                data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
+            },
+            // 提示框组件
+            tooltip: {
+                trigger: "item",
+                // 这里支持html! (使用函数就不支持 {b} 格式化了)
+                formatter: (params: any) => {
+                    if (params.dataType === "node") {
+                        return params.data.id + "<br/>";
+                    } else if (params.dataType === "edge") {
+                        return params.data.source + " --> " + params.data.target;
+                    } else {
+                        return "不支持显示";
+                    }
+                },
+                // 提示框浮层的背景颜色
+                backgroundColor: "rgba(50, 50, 50, 0.5)",
+                // 提示框浮层的边框颜色
+                borderColor: layoutThemeColor,
+                borderWidth: 1,
+            },
+            series: [
+                {
+                    type: 'graph', // 图表类型为图
+                    layout: 'force', // 力导向布局
+                    animation: true, // 开启动画
+                    draggable: true, // 允许拖动节点
+                    data: nodeData,  // 指定数据
+                    categories: webkitDep.categories.getMapList(), // 指定分类
+                    force: {
+                        edgeLength: [50, 200], // 边的长度
+                        repulsion: 100, // 排斥力
+                        gravity: 0.025, // 向中心的引力因子
+                    },
+                    edges: webkitDep.links.getMapList(), // 边的数据
+                    roam: true, // ('scale')只允许缩放
+                    edgeSymbol: ['circle', 'arrow'], // 箭头样式
+                    lineStyle: { // 连线样式
+                        color: layoutThemeColor,
+                        width: 2,
+                        curveness: 0,   // 曲率
+                        opacity: 0.75,  // 不透明度
+                    },
+                    label: {
+                        show: false, // 默认隐藏标签
+                    },
+                    // 问题: 依旧无法显示: 连接附近的结点的标签 (只能手写了事件吗, 每一次O(n^2))
+                    emphasis: {
+                        focus: 'adjacency', // 高亮当前节点及其相邻节点和边
+                        label: {
+                            position: 'right', // 高亮时显示标签的位置
+                            show: true         // 高亮时显示标签
+                        }
+                    },
+                    // 连线样式
+                    edgeLabel: {
+                        normal: {
+                            show: true,
+                            textStyle: {
+                                color: layoutThemeColor,
+                                fontSize: 14,
+                            },
+                            formatter: function (param: any) { // 标签内容
+                                return webkitDep.nodes.getItemById(param.data.target)?.category;
+                            }
+                        }
+                    }
+                },
+            ],
+        };
+
+        myChart.value?.hideLoading(); // 隐藏加载动画
+        myChart.value?.setOption(option); // 设置图表选项
+    });
+};
+
 // 在组件挂载后初始化图表
 onMounted(async () => {
     if (chart.value) {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
-        myChart.value.showLoading(); // 显示加载动画
+
         await loadCharts();
-        const nodeData = await createForceNodeData(); // 获取节点数据
-
-        // 网络加载
-        initCategory(() => {
-            // 图表配置
-            const option = {
-                color: webkitDep.categories.getMapList().map(it => it.color), // 图例颜色
-                legend: {
-                    data: webkitDep.categories.getMapList().map(it => it.name), // 图例数据
-                },
-                // 提示框组件
-                tooltip: {
-                    trigger: "item",
-                    // 这里支持html! (使用函数就不支持 {b} 格式化了)
-                    formatter: (params: any) => {
-                        if (params.dataType === "node") {
-                            return params.data.id + "<br/>";
-                        } else if (params.dataType === "edge") {
-                            return params.data.source + " --> " + params.data.target;
-                        } else {
-                            return "不支持显示";
-                        }
-                    },
-                    // 提示框浮层的背景颜色
-                    backgroundColor: "rgba(50, 50, 50, 0.5)",
-                    // 提示框浮层的边框颜色
-                    borderColor: layoutThemeColor,
-                    borderWidth: 1,
-                },
-                series: [
-                    {
-                        type: 'graph', // 图表类型为图
-                        layout: 'force', // 力导向布局
-                        animation: true, // 开启动画
-                        draggable: true, // 允许拖动节点
-                        data: nodeData,  // 指定数据
-                        categories: webkitDep.categories.getMapList(), // 指定分类
-                        force: {
-                            edgeLength: [50, 200], // 边的长度
-                            repulsion: 100, // 排斥力
-                            gravity: 0.025, // 向中心的引力因子
-                        },
-                        edges: webkitDep.links.getMapList(), // 边的数据
-                        roam: true, // ('scale')只允许缩放
-                        edgeSymbol: ['circle', 'arrow'], // 箭头样式
-                        lineStyle: { // 连线样式
-                            color: layoutThemeColor,
-                            width: 2,
-                            curveness: 0,   // 曲率
-                            opacity: 0.75,  // 不透明度
-                        },
-                        label: {
-                            show: false, // 默认隐藏标签
-                        },
-                        // 问题: 依旧无法显示: 连接附近的结点的标签 (只能手写了事件吗, 每一次O(n^2))
-                        emphasis: {
-                            focus: 'adjacency', // 高亮当前节点及其相邻节点和边
-                            label: {
-                                position: 'right', // 高亮时显示标签的位置
-                                show: true         // 高亮时显示标签
-                            }
-                        },
-                        // 连线样式
-                        edgeLabel: {
-                            normal: {
-                                show: true,
-                                textStyle: {
-                                    color: layoutThemeColor,
-                                    fontSize: 14,
-                                },
-                                formatter: function (param: any) { // 标签内容
-                                    return webkitDep.nodes.getItemById(param.data.target)?.category;
-                                }
-                            }
-                        }
-                    },
-                ],
-            };
-
-            myChart.value?.hideLoading(); // 隐藏加载动画
-            myChart.value?.setOption(option); // 设置图表选项
-        });
+        await getAllChartData();
 
         // 窗口调整时图表自适应
         window.addEventListener('resize', () => {
@@ -779,7 +794,7 @@ onMounted(async () => {
                 };
 
                 // 添加边, 后端同步
-                api.addLink(nowGraphId, {
+                api.addLink(nowGraphId.value, {
                     edgeId: 0,
                     fromNodeId: linkNode.source,
                     toNodeId: linkNode.target
@@ -1046,7 +1061,7 @@ const _addNodeTest = () => {
 
 // 上传图片到后端, 获取到url
 const uploadImgFromNet = (cb: Function) => {
-    api.uploadImg(nowGraphId, cachedFile.value, (url: any) => {
+    api.uploadImg(nowGraphId.value, cachedFile.value, (url: any) => {
         nodeForm.value.imageUrl = cloneDeep(url);
         cachedFile.value = null;
         cb();
@@ -1067,7 +1082,7 @@ const addNodeFromNet = (categoryId: number) => {
     };
 
     // 添加结点
-    api.addNode(nowGraphId, {
+    api.addNode(nowGraphId.value, {
         nodeId: 0,
         legendId: node.categoryId,
         name: node.name,
@@ -1094,7 +1109,7 @@ const updateNodeFromNet = (categoryId: number) => {
     };
 
     // 修改结点
-    api.updateNode(nowGraphId, {
+    api.updateNode(nowGraphId.value, {
         nodeId: node.id,
         legendId: node.categoryId,
         name: node.name,
@@ -1141,7 +1156,7 @@ const addCategoryAndNode = (categoryName: string, categoryColor: string) => {
             name: categoryName,
             color: categoryColor
         };
-        api.addCategory(nowGraphId, {
+        api.addCategory(nowGraphId.value, {
             legendId: 0,
             legendName: newCategoryIt.name,
             legendColor: newCategoryIt.color
@@ -1176,7 +1191,7 @@ const updateCategoryAndNode = (categoryName: string, categoryColor: string) => {
             name: categoryName,
             color: categoryColor
         };
-        api.addCategory(nowGraphId, {
+        api.addCategory(nowGraphId.value, {
             legendId: 0,
             legendName: newCategoryIt.name,
             legendColor: newCategoryIt.color
@@ -1375,7 +1390,7 @@ const removeNode = async (nodeId: number) => {
         // 将回调包装成 Promise
         const apiCall = new Promise((resolve, reject) => {
             api.delNode(
-                nowGraphId,
+                nowGraphId.value,
                 nodeId,
                 (data: any) => {
                     // 成功回调
@@ -1470,7 +1485,7 @@ const removeEdge = async (id: number) => {
     // 包装异步操作为 Promise
     const apiCall = new Promise((resolve, reject) => {
         api.delLink(
-            nowGraphId,
+            nowGraphId.value,
             id,
             (data: any) => {
                 // 成功回调
@@ -1557,7 +1572,6 @@ const removeEdge = async (id: number) => {
     --el-border-color: #000;
 }
 
-
 .chart-list-no-open {
     width: 0px;
     display: none;
@@ -1594,7 +1608,7 @@ const removeEdge = async (id: number) => {
 .chart-item:hover,
 .chart-item-now:hover {
     background-color: #ff066521;
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
 .chart-icon {
