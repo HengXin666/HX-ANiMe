@@ -304,4 +304,22 @@ public class ForceGraphService {
         userTablesDO.setDescription(userTablesDTO.getDescription());
         return userTablesDAO.addUserTables(userTablesDO);
     }
+
+    /**
+     * @description: 更新图表
+     * @author: Heng_Xin
+     * @date: 2024/12/10 23:27
+     * @param: userId
+     * @param: userTablesDTO
+     * @return: boolean
+     **/
+    public boolean updateTable(Long userId, UserTablesDTO userTablesDTO) {
+        UserTablesDO userTablesDO = new UserTablesDO();
+        userTablesDO.setId(userTablesDTO.getId());
+        userTablesDO.setUserId(userId);
+        userTablesDO.setName(userTablesDTO.getName());
+        userTablesDO.setImgUrl(userTablesDTO.getImgUrl());
+        userTablesDO.setDescription(userTablesDTO.getDescription());
+        return userTablesDAO.updateUserTable(userTablesDO) > 0;
+    }
 }

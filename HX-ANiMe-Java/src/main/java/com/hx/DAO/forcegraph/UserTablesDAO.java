@@ -71,4 +71,22 @@ public class UserTablesDAO {
         // 返回主键 ID
         return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
     }
+
+    /**
+     * @description: 更新用户图表, 返回更新行数
+     * @author: Heng_Xin
+     * @date: 2024/12/10 23:27
+     * @param: userTablesDO
+     * @return: int
+     **/
+    public int updateUserTable(UserTablesDO userTablesDO) {
+        String sql = "UPDATE user_tables SET name = ?, img_url = ?, description = ? WHERE id = ?";
+        return jdbcTemplate.update(
+            sql,
+            userTablesDO.getName(),
+            userTablesDO.getImgUrl(),
+            userTablesDO.getDescription(),
+            userTablesDO.getId()
+        );
+    }
 }

@@ -320,4 +320,26 @@ public class ForceGraphController {
         }
         return JsonVo.success(res);
     }
+
+    /**
+     * @description: 修改图表
+     * @author: Heng_Xin
+     * @date: 2024/12/10 23:32
+     * @param: request
+     * @param: userTablesDTO
+     * @return: JsonVo<String>
+     **/
+    @PostMapping("/update-table")
+    public JsonVo<String> updateTable(
+        HttpServletRequest request,
+        @RequestBody UserTablesDTO userTablesDTO
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("修改用户图表 User ID: {}, User Name: {}", userId, userName);
+        if (!forceGraphService.updateTable(userId, userTablesDTO)) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success("ok");
+    }
 }

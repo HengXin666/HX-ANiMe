@@ -287,6 +287,31 @@ export const updateNode = (userTableId, nodeData, success, fail) => {
 };
 
 /**
+ * 修改用户图表
+ * @param tableData 图例数据
+ * @param success 成功回调
+ * @param fail 失败回调
+ */
+export const updateUserTable = (tableData, success, fail) => {
+	Request.requestJson(Request.POST, currBaseUrl + "update-table", tableData)
+		.then((data) => {
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		})
+		.catch((err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		});
+};
+
+/**
  * 删除边
  * @param userTableId 当前表id
  * @param edgeId 边id

@@ -21,7 +21,8 @@
                     <el-scrollbar>
                         <div v-for="it in graphList" :key="it.id"
                             :class="[it.id === nowGraphId ? 'chart-item-now' : 'chart-item']"
-                            @click="handleChartClick(it.id)">
+                            @click="handleLoadChart(it.id)"
+                            @contextmenu="handleEditChart(it.id)">
                             <el-image v-if="it.imgUrl" :src="it.imgUrl" loading="lazy" fit="cover" class="chart-icon">
                                 <template #error>
                                     <el-icon class="chart-icon">
@@ -440,14 +441,107 @@ const addGraph = () => {
 };
 
 /**
- * 点击图表事件
+ * 左键点击图表事件: 加载该图
  * @param id 
  */
-const handleChartClick = (id: number) => {
+const handleLoadChart = (id: number) => {
     ElMessage.success(`点击图表 ID: ${id}`);
     // 这里调用后端接口, 根据 ID 获取详细信息
     nowGraphId.value = id;
     getAllChartData();
+};
+
+/**
+ * 右键点击图表事件: 修改图表信息
+ * @param id 
+ */
+const handleEditChart = (id: number) => {
+    ElMessage.success(`点击图表 ID: ${id}`);
+
+    const it = graphList.value.find(it => it.id === id);
+    const formData = cloneDeep(it);
+
+    if (!it || !formData)
+        return;
+
+    ElMessageBox({
+        title: "修改图表",
+        message: h("div", {
+            style: "width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
+        }, [
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "图表名称: "),
+                h("input", {
+                    style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                    value: formData.name,
+                    onInput: (event: Event) => {
+                        formData.name = (event.target as HTMLInputElement).value;
+                    },
+                    placeholder: "请输入名称",
+                }),
+            ]),
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "图片URL: "),
+                h("div", { style: "display: flex; align-items: center;" }, [
+                    h("input", {
+                        style: "flex: 1; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                        value: formData.imgUrl,
+                        onInput: (event: Event) => {
+                            formData.imgUrl = (event.target as HTMLInputElement).value;
+                        },
+                        placeholder: "请输入图片URL",
+                    }),
+                    h("button", {
+                        onClick: () => {
+                            if (formData.imgUrl) {
+                                ElMessageBox({
+                                    title: "查看图片",
+                                    message: h("img", { src: formData.imgUrl, style: "width: 100%; height: auto;" }),
+                                    confirmButtonText: "关闭",
+                                });
+                            } else {
+                                ElMessage.error("请输入图片URL!");
+                            }
+                        },
+                        style: "margin-left: 10px; padding: 10px 20px; border-radius: 5px; border: 1px solid " + layoutThemeColor + "; background-color: " + layoutThemeColor + "; color: white; cursor: pointer; border: none;",
+                    }, "查看图片")
+                ])
+            ]),
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "描述: "),
+                h("input", {
+                    style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                    value: formData.description,
+                    onInput: (event: Event) => {
+                        formData.description = (event.target as HTMLInputElement).value;
+                    },
+                    placeholder: "请输入描述",
+                }),
+            ]),
+        ]),
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        showCancelButton: true,
+        callback: (action: any) => {
+            if (action === "confirm") {
+                if (!formData.name) {
+                    ElMessage.error("名称为必填项!");
+                    return;
+                }
+                api.updateUserTable({
+                    ...formData
+                }, (ok: string) => {
+                    it.name = formData.name;
+                    it.imgUrl = formData.imgUrl;
+                    it.description = formData.description;
+                }, () => {
+
+                });
+                console.log("表单数据：", formData);
+                ElMessage.success("修改成功!");
+            }
+        },
+    });
 };
 
 // === End === 左侧边栏数据 === End ===
