@@ -1,7 +1,6 @@
 package com.hx.controller;
 
-import com.hx.pojo.DO.forcegraph.LegendDO;
-import com.hx.pojo.DTO.UserTablesDTO;
+import com.hx.pojo.DTO.forcegraph.UserTablesDTO;
 import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
@@ -281,7 +280,13 @@ public class ForceGraphController {
         return JsonVo.success(imgUrl);
     }
 
-    // 获取图标列表
+    /**
+     * @description: 根据用户 id, 获取图标列表
+     * @author: Heng_Xin
+     * @date: 2024/12/10 17:51
+     * @param: request
+     * @return: JsonVo<List<UserTablesDTO>>
+     **/
     @PostMapping("/get-table-list")
     public JsonVo<List<UserTablesDTO>> getTableList(
         HttpServletRequest request
@@ -290,6 +295,29 @@ public class ForceGraphController {
         String userName = (String) request.getAttribute("userName");
         log.info("获取图标列表 User ID: {}, User Name: {}", userId, userName);
         List<UserTablesDTO> res = forceGraphService.getTableList(userId);
+        return JsonVo.success(res);
+    }
+
+    /**
+     * @description: 添加图表, 并返回图表 id
+     * @author: Heng_Xin
+     * @date: 2024/12/10 17:52
+     * @param: request
+     * @param: userTablesDTO
+     * @return: JsonVo<Long>
+     **/
+    @PostMapping("/add-table")
+    public JsonVo<Long> addTable(
+        HttpServletRequest request,
+        @RequestBody UserTablesDTO userTablesDTO
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("添加用户图表 User ID: {}, User Name: {}", userId, userName);
+        Long res = forceGraphService.addTable(userId, userTablesDTO);
+        if (res == null) {
+            return JsonVo.fail(null);
+        }
         return JsonVo.success(res);
     }
 }

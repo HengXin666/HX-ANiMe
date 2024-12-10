@@ -8,17 +8,19 @@
                     <el-row align="middle" justify="space-between"
                         style="height: 50px; padding: 10px; background-color: #171717;">
                         <!-- 左侧按钮: 收起 -->
-                        <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+                        <el-button type="primary" :icon="SwitchFilled" circle
+                            @click="switchSidebarDisplay()"></el-button>
 
                         <!-- 右侧按钮: 添加图表 -->
-                        <el-button type="primary" :icon="Edit" circle></el-button>
+                        <el-button type="primary" :icon="Edit" circle @click="addGraph()"></el-button>
                     </el-row>
                 </div>
 
                 <!-- 左侧滚动栏 -->
                 <el-aside class="chart-list">
                     <el-scrollbar>
-                        <div v-for="chart in graphList" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
+                        <div v-for="chart in graphList" :key="chart.id" class="chart-item"
+                            @click="handleChartClick(chart.id)">
                             <el-image :src="chart.imgUrl" fit="cover" class="chart-icon" />
                             <div class="chart-info">
                                 <h3 class="chart-name">{{ chart.name }}</h3>
@@ -31,8 +33,7 @@
         </transition>
 
         <div v-if="!isSidebarDisplay" class="chart-list-show-btn">
-            <el-row align="middle" justify="space-between"
-                class="chart-list-fixed">
+            <el-row align="middle" justify="space-between" class="chart-list-fixed">
                 <!-- 左侧按钮: 收起 -->
                 <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
             </el-row>
@@ -338,6 +339,87 @@ const getFirstSentence = (content: string) => {
     } catch {
         return "无效的内容格式";
     }
+};
+
+/**
+ * 新增图表
+ */
+const addGraph = () => {
+    const formData = {
+        name: "",
+        imgUrl: "",
+        description: "",
+    };
+
+    ElMessageBox({
+        title: "添加图表",
+        message: h("div", {
+            style: "width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
+        }, [
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "名称: "),
+                h("input", {
+                    style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                    value: formData.name,
+                    onInput: (event: Event) => {
+                        formData.name = (event.target as HTMLInputElement).value;
+                    },
+                    placeholder: "请输入名称",
+                }),
+            ]),
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "图片URL: "),
+                h("div", { style: "display: flex; align-items: center;" }, [
+                    h("input", {
+                        style: "flex: 1; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                        value: formData.imgUrl,
+                        onInput: (event: Event) => {
+                            formData.imgUrl = (event.target as HTMLInputElement).value;
+                        },
+                        placeholder: "请输入图片URL",
+                    }),
+                    h("button", {
+                        onClick: () => {
+                            if (formData.imgUrl) {
+                                ElMessageBox({
+                                    title: "查看图片",
+                                    message: h("img", { src: formData.imgUrl, style: "width: 100%; height: auto;" }),
+                                    confirmButtonText: "关闭",
+                                });
+                            } else {
+                                ElMessage.error("请输入图片URL!");
+                            }
+                        },
+                        style: "margin-left: 10px; padding: 10px 20px; border-radius: 5px; border: 1px solid " + layoutThemeColor + "; background-color: " + layoutThemeColor + "; color: white; cursor: pointer; border: none;",
+                    }, "查看图片")
+                ])
+            ]),
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "描述: "),
+                h("input", {
+                    style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                    value: formData.description,
+                    onInput: (event: Event) => {
+                        formData.description = (event.target as HTMLInputElement).value;
+                    },
+                    placeholder: "请输入描述",
+                }),
+            ]),
+        ]),
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        showCancelButton: true,
+        callback: (action: any) => {
+            if (action === "confirm") {
+                if (!formData.name) {
+                    ElMessage.error("名称为必填项!");
+                    return;
+                }
+                console.log("表单数据：", formData);
+                ElMessage.success("添加成功!");
+            }
+        },
+    });
 };
 
 /**
@@ -1406,37 +1488,53 @@ const removeEdge = async (id: number) => {
 
 <style lang="scss">
 /* 侧边栏显示的动画效果 */
-.chart-list-enter-active, .chart-list-leave-active {
-    transition: all 0.5s ease; /* 动画持续时间 */
+.chart-list-enter-active,
+.chart-list-leave-active {
+    transition: all 0.5s ease;
+    /* 动画持续时间 */
 }
-.chart-list-enter-from, .chart-list-leave-to {
-    transform: translateX(-100%); /* 隐藏状态 */
+
+.chart-list-enter-from,
+.chart-list-leave-to {
+    transform: translateX(-100%);
+    /* 隐藏状态 */
     opacity: 0;
 }
-.chart-list-enter-to, .chart-list-leave-from {
-    transform: translateX(0); /* 显示状态 */
+
+.chart-list-enter-to,
+.chart-list-leave-from {
+    transform: translateX(0);
+    /* 显示状态 */
     opacity: 1;
 }
 
 /* 显示 按钮样式 */
 .chart-list-fixed {
-    height: 50px; 
+    height: 50px;
     position: fixed;
-    left: 10px; /* 调整按钮靠左或其他位置 */
-    z-index: 1000; /* 保证按钮浮在其他内容上 */
+    left: 10px;
+    /* 调整按钮靠左或其他位置 */
+    z-index: 1000;
+    /* 保证按钮浮在其他内容上 */
     background-color: transparent;
-    box-shadow: none; /* 去掉默认的阴影效果 */
+    box-shadow: none;
+    /* 去掉默认的阴影效果 */
 }
 
 .chart-list-show-btn .el-button {
-    background-color: transparent !important; /* 按钮背景透明 */
-    border: none !important; /* 去掉按钮边框 */
-    color: #ffffff; /* 设置图标颜色 */
+    background-color: transparent !important;
+    /* 按钮背景透明 */
+    border: none !important;
+    /* 去掉按钮边框 */
+    color: #ffffff;
+    /* 设置图标颜色 */
 }
 
 .chart-list-show-btn .el-button:hover {
-    background-color: rgba(255, 255, 255, 0.049) !important; /* 鼠标悬浮时的效果 */
-    color: var(--el-menu-active-color); /* 鼠标悬浮时的图标颜色 */
+    background-color: rgba(255, 255, 255, 0.049) !important;
+    /* 鼠标悬浮时的效果 */
+    color: var(--el-menu-active-color);
+    /* 鼠标悬浮时的图标颜色 */
 }
 
 /* 左侧滚动栏样式 */

@@ -1,4 +1,4 @@
-package com.hx.pojo.DTO;
+package com.hx.pojo.DTO.forcegraph;
 
 import lombok.Data;
 

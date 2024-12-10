@@ -3,8 +3,11 @@ package com.hx.DAO.forcegraph;
 import com.hx.pojo.DO.forcegraph.UserTablesDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
 import java.util.List;
 
 /**
@@ -42,5 +45,30 @@ public class UserTablesDAO {
             },
             userId
         );
+    }
+
+    /**
+     * @description: 添加用户图表, 返回图表ID
+     * @author: Heng_Xin
+     * @date: 2024/12/10 17:54
+     * @param: userTablesDO
+     * @return: Long
+     **/
+    public Long addUserTables(UserTablesDO userTablesDO) {
+        String sql = "INSERT INTO user_tables (user_id, table_name, icon_url, description) VALUES (?, ?, ?, ?)";
+        // 使用 KeyHolder 获取自增主键
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"}); // "id" 是主键列名
+            ps.setLong(1, userTablesDO.getUserId());
+            ps.setString(2, userTablesDO.getName());
+            ps.setString(3, userTablesDO.getImgUrl());
+            ps.setString(4, userTablesDO.getDescription());
+            return ps;
+        }, keyHolder);
+
+        // 返回主键 ID
+        return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
     }
 }

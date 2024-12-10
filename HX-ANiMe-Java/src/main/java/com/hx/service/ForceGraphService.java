@@ -9,7 +9,7 @@ import com.hx.pojo.DO.forcegraph.EdgeDO;
 import com.hx.pojo.DO.forcegraph.LegendDO;
 import com.hx.pojo.DO.forcegraph.NodeDO;
 import com.hx.pojo.DO.forcegraph.UserTablesDO;
-import com.hx.pojo.DTO.UserTablesDTO;
+import com.hx.pojo.DTO.forcegraph.UserTablesDTO;
 import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
@@ -286,5 +286,22 @@ public class ForceGraphService {
             userTablesDTO.setDescription(userTablesDO.getDescription());
             return userTablesDTO;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * @description: 添加图表, 并且返回图表ID
+     * @author: Heng_Xin
+     * @date: 2024/12/10 17:53
+     * @param: userId
+     * @param: userTablesDTO
+     * @return: Long
+     **/
+    public Long addTable(Long userId, UserTablesDTO userTablesDTO) {
+        UserTablesDO userTablesDO = new UserTablesDO();
+        userTablesDO.setUserId(userId);
+        userTablesDO.setName(userTablesDTO.getName());
+        userTablesDO.setImgUrl(userTablesDTO.getImgUrl());
+        userTablesDO.setDescription(userTablesDTO.getDescription());
+        return userTablesDAO.addUserTables(userTablesDO);
     }
 }
