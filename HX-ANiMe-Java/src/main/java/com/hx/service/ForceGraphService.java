@@ -3,10 +3,13 @@ package com.hx.service;
 import com.hx.DAO.forcegraph.EdgeDAO;
 import com.hx.DAO.forcegraph.LegendDAO;
 import com.hx.DAO.forcegraph.NodeDAO;
+import com.hx.DAO.forcegraph.UserTablesDAO;
 import com.hx.config.GlobalConfig;
 import com.hx.pojo.DO.forcegraph.EdgeDO;
 import com.hx.pojo.DO.forcegraph.LegendDO;
 import com.hx.pojo.DO.forcegraph.NodeDO;
+import com.hx.pojo.DO.forcegraph.UserTablesDO;
+import com.hx.pojo.DTO.UserTablesDTO;
 import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
@@ -40,6 +43,8 @@ public class ForceGraphService {
     private EdgeDAO edgeDAO;
     @Autowired
     private GlobalConfig globalConfig;
+    @Autowired
+    private UserTablesDAO userTablesDAO;
 
     // 保存文件的根路径, 通过读取, application.yaml配置文件
     @Value("${file.path}")
@@ -262,5 +267,24 @@ public class ForceGraphService {
         // 删除该结点所对应的所有边 (可能没有该边)
         edgeDAO.removeAllEdge(userId, userTableId, nodeId);
         return true;
+    }
+
+    /**
+     * @description: 获取用户所有图表
+     * @author: Heng_Xin
+     * @date: 2024/12/10 15:31
+     * @param: userId
+     * @return: List<UserTablesDTO>
+     **/
+    public List<UserTablesDTO> getTableList(Long userId) {
+        List<UserTablesDO> userTablesDOList = userTablesDAO.queryUserTables(userId);
+        return userTablesDOList.stream().map(userTablesDO -> {
+            UserTablesDTO userTablesDTO = new UserTablesDTO();
+            userTablesDTO.setId(userTablesDO.getUserId());
+            userTablesDTO.setName(userTablesDO.getName());
+            userTablesDTO.setImgUrl(userTablesDO.getImgUrl());
+            userTablesDTO.setDescription(userTablesDO.getDescription());
+            return userTablesDTO;
+        }).collect(Collectors.toList());
     }
 }

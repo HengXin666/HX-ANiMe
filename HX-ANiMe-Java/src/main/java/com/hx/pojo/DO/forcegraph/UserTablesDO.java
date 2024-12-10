@@ -14,23 +14,23 @@ import javax.persistence.*;
  */
 
 @Entity
-@Table(name = "UserTablesDO")
+@Table(name = "user_tables")
 @Data
 public class UserTablesDO {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_table_id", nullable = false)
-    private Long userTableId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "table_name", nullable = false, length = 255)
-    private String tableName;
+    @Column(name = "name", nullable = false, length = 255)
+    private String name;
 
-    @Column(name = "icon_url", length = 500)
-    private String iconUrl;
+    @Column(name = "img_url", length = 500)
+    private String imgUrl;
 
-    @Column(name = "table_content", columnDefinition = "TEXT")
-    private String tableContent;
+    @Column(name = "description", nullable = false, length = 255)
+    private String description;
 }

@@ -18,8 +18,8 @@
                 <!-- 左侧滚动栏 -->
                 <el-aside class="chart-list">
                     <el-scrollbar>
-                        <div v-for="chart in charts" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
-                            <el-image :src="chart.iconUrl" fit="cover" class="chart-icon" />
+                        <div v-for="chart in graphList" :key="chart.id" class="chart-item" @click="handleChartClick(chart.id)">
+                            <el-image :src="chart.imgUrl" fit="cover" class="chart-icon" />
                             <div class="chart-info">
                                 <h3 class="chart-name">{{ chart.name }}</h3>
                                 <p class="chart-description">{{ getFirstSentence(chart.description) }}</p>
@@ -276,7 +276,7 @@ const _linksData: Link[] = [];
 ];
 
 // 当前图的id
-const nowGraphId = 1;
+let nowGraphId = -1;
 
 // 创建 SyncArrayMap 实例
 const webkitDep = {
@@ -295,7 +295,7 @@ const webkitDep = {
 const isSidebarDisplay = ref(true);
 
 // 左侧图表列表
-const charts = ref<Array<{ id: number; iconUrl: string; name: string; description: string }>>([]);
+const graphList = ref<Array<{ id: number; imgUrl: string; name: string; description: string }>>([]);
 
 // TODO 记录当前打开的是哪一个图表, 并且高亮显示
 
@@ -312,86 +312,24 @@ const switchSidebarDisplay = () => {
     }, 550);
 };
 
-// 从后端加载图表数据
-const loadCharts = () => {
-    // 模拟从后端获取数据
-    charts.value = [
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-        {
-            id: 1,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表1",
-            description: "这是第一个图表的简介。1111111111111",
-        },
-        {
-            id: 2,
-            iconUrl: "https://via.placeholder.com/50",
-            name: "图表2",
-            description: "这是第二个图表的简介。",
-        },
-    ];
+// 异步, 从后端加载图表数据
+const loadCharts = async () => {
+    // 包装异步操作为 Promise
+    const apiCall = new Promise((resolve, reject) => {
+        api.getUserTables((data: any) => {
+            for (const it of data) {
+                graphList.value.push(it);
+            }
+            if (graphList.value.length > 0) {
+                nowGraphId = graphList.value[0].id;
+            }
+            resolve(data);
+        }, () => {
+            reject();
+        });
+    });
+    await apiCall;
 };
-
-loadCharts();
 
 // 提取描述的第一句话
 const getFirstSentence = (content: string) => {
@@ -585,7 +523,7 @@ onMounted(async () => {
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
         myChart.value.showLoading(); // 显示加载动画
-
+        await loadCharts();
         const nodeData = await createForceNodeData(); // 获取节点数据
 
         // 网络加载
@@ -1444,9 +1382,9 @@ const removeEdge = async (id: number) => {
                 // 成功回调
                 resolve(data);
             },
-            (error: any) => {
+            () => {
                 // 失败回调
-                reject(error);
+                reject();
             }
         );
     });
@@ -1457,9 +1395,8 @@ const removeEdge = async (id: number) => {
 
         // 删除前端边
         webkitDep.links.removeItem(id);
-
-    } catch (error) {
-        console.error("删除失败：", error);
+    } catch {
+        console.error("删除失败");
     }
 };
 // === end === 删除边逻辑 === end ===

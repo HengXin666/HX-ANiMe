@@ -1,6 +1,7 @@
 package com.hx.controller;
 
 import com.hx.pojo.DO.forcegraph.LegendDO;
+import com.hx.pojo.DTO.UserTablesDTO;
 import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
@@ -278,5 +279,17 @@ public class ForceGraphController {
             return JsonVo.create(null, ResultStatus.FAIL.getCode(), "文件重名!");
         }
         return JsonVo.success(imgUrl);
+    }
+
+    // 获取图标列表
+    @PostMapping("/get-table-list")
+    public JsonVo<List<UserTablesDTO>> getTableList(
+        HttpServletRequest request
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("获取图标列表 User ID: {}, User Name: {}", userId, userName);
+        List<UserTablesDTO> res = forceGraphService.getTableList(userId);
+        return JsonVo.success(res);
     }
 }

@@ -33,7 +33,7 @@ public class EdgeDAO {
      * @return: Long
      **/
     public Long addEdge(EdgeDO edgeDO) {
-        String sql = "INSERT INTO Edges (user_id, user_table_id, from_node_id, to_node_id) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO edges (user_id, user_table_id, from_node_id, to_node_id) VALUES (?, ?, ?, ?)";
         // 使用 KeyHolder 获取自增主键
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -59,7 +59,7 @@ public class EdgeDAO {
      * @return: List<EdgeDO>
      **/
     public List<EdgeDO> queryEdges(Long userId, Long userTableId) {
-        String sql = "SELECT * FROM Edges WHERE user_id = ? AND user_table_id = ?";
+        String sql = "SELECT * FROM edges WHERE user_id = ? AND user_table_id = ?";
         return jdbcTemplate.query(
             sql,
             (rs, rowNum) -> {
@@ -86,7 +86,7 @@ public class EdgeDAO {
      * @return: int
      **/
     public int removeEdge(Long userId, Long userTableId, Long edgeId) {
-        String sql = "DELETE FROM Edges WHERE user_id = ? AND user_table_id = ? AND edge_id = ?";
+        String sql = "DELETE FROM edges WHERE user_id = ? AND user_table_id = ? AND edge_id = ?";
         return jdbcTemplate.update(sql, userId, userTableId, edgeId);
     }
 
@@ -100,7 +100,7 @@ public class EdgeDAO {
      * @return: int
      **/
     public int removeAllEdge(Long userId, Long userTableId, Long nodeId) {
-        String sql = "DELETE FROM Edges WHERE user_id = ? AND user_table_id = ? AND (from_node_id = ? OR to_node_id = ?)";
+        String sql = "DELETE FROM edges WHERE user_id = ? AND user_table_id = ? AND (from_node_id = ? OR to_node_id = ?)";
         return jdbcTemplate.update(sql, userId, userTableId, nodeId, nodeId);
     }
 }
