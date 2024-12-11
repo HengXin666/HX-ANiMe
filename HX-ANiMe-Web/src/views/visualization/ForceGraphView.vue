@@ -21,8 +21,7 @@
                     <el-scrollbar>
                         <div v-for="it in graphList" :key="it.id"
                             :class="[it.id === nowGraphId ? 'chart-item-now' : 'chart-item']"
-                            @click="handleLoadChart(it.id)"
-                            @contextmenu="handleEditChart(it.id)">
+                            @click="handleLoadChart(it.id)" @contextmenu.prevent="showContextMenu($event, it.id)">
                             <el-image v-if="it.imgUrl" :src="it.imgUrl" loading="lazy" fit="cover" class="chart-icon">
                                 <template #error>
                                     <el-icon class="chart-icon">
@@ -37,6 +36,29 @@
                         </div>
                     </el-scrollbar>
                 </el-aside>
+
+
+                <!-- 右键菜单 -->
+                <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
+                    class="custom-context-menu">
+                    <el-card style="max-width: 480px; ">
+                        <!-- 修改按钮 -->
+                        <div>
+                            <el-button type="text" @click="handleEditChart(contextMenuId)"
+                                :icon="Setting" style="color: gold;">
+                                修改
+                            </el-button>
+                        </div>
+
+                        <!-- 删除按钮 -->
+                        <div>
+                            <el-button type="text" @click="handleDelChart(contextMenuId)"
+                                :icon="Delete" style="color: #f56c6c;">
+                                删除
+                            </el-button>
+                        </div>
+                    </el-card>
+                </div>
             </div>
         </transition>
 
@@ -224,7 +246,7 @@ import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import * as api from '@/apis/forceGraph';
-import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled, Picture } from '@element-plus/icons-vue';
+import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled, Picture, Delete } from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -348,6 +370,58 @@ const getFirstSentence = (content: string) => {
     }
 };
 
+// 右键菜单状态
+const contextMenuVisible = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+const contextMenuId = ref(-1);
+
+// 显示右键菜单
+const showContextMenu = (event: MouseEvent, id: number) => {
+    contextMenuVisible.value = true;
+    contextMenuX.value = event.clientX;
+    contextMenuY.value = event.clientY;
+    contextMenuId.value = id;
+    startMenuEventListener();
+};
+
+// 任何地方左键, 都是关闭菜单
+const handleClickOutside = () => {
+    contextMenuVisible.value = false;
+    stopMenuEventListener();
+};
+
+// 非元素处右键, 都是关闭菜单
+const handleContextMenuOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // 判断点击的元素是否是菜单本身或触发区域
+    // 点击的不是菜单 && 点击的不是触发区域
+    if (!(target.closest(".custom-context-menu")
+        || target.closest(".chart-item")
+        || target.closest(".chart-item-now"))) {
+        contextMenuVisible.value = false; // 关闭菜单
+        stopMenuEventListener();
+    }
+};
+
+/**
+ * 开启菜单事件监听
+ */
+const startMenuEventListener = () => {
+    // 隐藏菜单
+    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("contextmenu", handleContextMenuOutside);
+};
+
+/**
+ * 关闭菜单事件监听
+ */
+const stopMenuEventListener = () => {
+    // 隐藏菜单
+    document.removeEventListener("click", handleClickOutside);
+    document.removeEventListener("contextmenu", handleContextMenuOutside);
+};
+
 /**
  * 新增图表
  */
@@ -438,6 +512,7 @@ const addGraph = () => {
             }
         },
     });
+    contextMenuVisible.value = false;
 };
 
 /**
@@ -445,19 +520,15 @@ const addGraph = () => {
  * @param id 
  */
 const handleLoadChart = (id: number) => {
-    ElMessage.success(`点击图表 ID: ${id}`);
-    // 这里调用后端接口, 根据 ID 获取详细信息
     nowGraphId.value = id;
     getAllChartData();
 };
 
 /**
- * 右键点击图表事件: 修改图表信息
+ * 菜单: 修改图表信息
  * @param id 
  */
 const handleEditChart = (id: number) => {
-    ElMessage.success(`点击图表 ID: ${id}`);
-
     const it = graphList.value.find(it => it.id === id);
     const formData = cloneDeep(it);
 
@@ -539,6 +610,58 @@ const handleEditChart = (id: number) => {
                 });
                 console.log("表单数据：", formData);
                 ElMessage.success("修改成功!");
+            }
+        },
+    });
+};
+
+/**
+ * 菜单: 删除该图表
+ * @param id
+ */
+const handleDelChart = (id: number) => {
+    const index = graphList.value.findIndex(it => it.id === id);
+    let name = "";
+
+    if (index === -1)
+        return;
+
+    ElMessageBox({
+        title: "删除图表",
+        message: h("div", {
+            style: "width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
+        }, [
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("h1", {
+                    style: "font-weight: bold; display: block; margin-bottom: 5px; color: red;"
+                }, "警告:"),
+                h("h3", {
+                    style: "font-weight: bold; display: block; margin-bottom: 5px; color: yellow;"
+                }, "删除该图表, 会删除该图的全部内容!")
+            ]),
+            h("div", { style: "margin-bottom: 15px; width: 100%;" }, [
+                h("span", { style: "font-weight: bold; display: block; margin-bottom: 5px;" }, "确认: "),
+                h("input", {
+                    style: "width: 100%; padding: 10px; border-radius: 5px; border: 1px solid " + layoutThemeColor + ";",
+                    value: name,
+                    onInput: (event: Event) => {
+                        name = (event.target as HTMLInputElement).value;
+                    },
+                    placeholder: "请输入该图表的名称",
+                }),
+            ]),
+        ]),
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        showCancelButton: true,
+        callback: (action: any) => {
+            if (action === "confirm") {
+                if (name !== graphList.value[index].name) {
+                    ElMessage.error("请输入正确的名称");
+                    return;
+                }
+                graphList.value.splice(index, 1); // 删除指定元素
+                ElMessage.success("删除成功!");
             }
         },
     });
@@ -1727,6 +1850,15 @@ const removeEdge = async (id: number) => {
     font-size: 12px;
     color: #909399;
     margin: 0;
+}
+
+.custom-context-menu {
+    position: fixed;
+    z-index: 9999;
+    border: 1px solid var(--el-menu-active-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 // 主界面
