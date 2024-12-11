@@ -106,4 +106,17 @@ public class NodeDAO {
         String sql = "DELETE FROM Nodes WHERE user_id = ? AND user_table_id = ? AND node_id = ?";
         return jdbcTemplate.update(sql, userId, userTableId, nodeId);
     }
+
+    /**
+     * @description: 删除所有结点, 按照用户ID和用户表ID删除, 返回删除行数
+     * @author: Heng_Xin
+     * @date: 2024/12/11 11:20
+     * @param: userId
+     * @param: userTableId
+     * @return: int
+     **/
+    public int removeAllNode(Long userId, Long userTableId) {
+        String sql = "DELETE FROM Nodes WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId);
+    }
 }

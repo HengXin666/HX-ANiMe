@@ -67,4 +67,17 @@ public class LegendDAO {
         // 返回主键 ID
         return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
     }
+
+    /**
+     * @description: 删除指定用户id和图表id的所有图例, 返回删除的行数
+     * @author: Heng_Xin
+     * @date: 2024/12/11 11:22
+     * @param: userId
+     * @param: userTableId
+     * @return: int
+     **/
+    public int removeAllLegend(Long userId, Long userTableId) {
+        String sql = "DELETE FROM Legends WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId);
+    }
 }

@@ -265,7 +265,7 @@ public class ForceGraphService {
             return false;
         }
         // 删除该结点所对应的所有边 (可能没有该边)
-        edgeDAO.removeAllEdge(userId, userTableId, nodeId);
+        edgeDAO.removeAllEdgeByNodeId(userId, userTableId, nodeId);
         return true;
     }
 
@@ -321,5 +321,25 @@ public class ForceGraphService {
         userTablesDO.setImgUrl(userTablesDTO.getImgUrl());
         userTablesDO.setDescription(userTablesDTO.getDescription());
         return userTablesDAO.updateUserTable(userTablesDO) > 0;
+    }
+
+    /**
+     * @description: 删除图表, 并且删除该图表下的所有结点、边、图例
+     * @author: Heng_Xin
+     * @date: 2024/12/11 11:17
+     * @param: userId
+     * @param: userTableId
+     * @return: boolean
+     **/
+    public boolean removeTable(Long userId, Long userTableId) {
+        // 删除
+        if (userTablesDAO.removeUserTable(userId, userTableId) <= 0) {
+            return false;
+        }
+        // 调用各个图表元素的删除方法 (按照 用户id 和 tableId)
+        nodeDAO.removeAllNode(userId, userTableId);
+        edgeDAO.removeAllEdge(userId, userTableId);
+        legendDAO.removeAllLegend(userId, userTableId);
+        return true;
     }
 }

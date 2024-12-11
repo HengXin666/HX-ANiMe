@@ -42,6 +42,8 @@
                 <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
                     class="custom-context-menu">
                     <el-card style="max-width: 480px; ">
+                        <!-- 公开该图表 -->
+
                         <!-- 修改按钮 -->
                         <div>
                             <el-button type="text" @click="handleEditChart(contextMenuId)"
@@ -660,8 +662,16 @@ const handleDelChart = (id: number) => {
                     ElMessage.error("请输入正确的名称");
                     return;
                 }
-                graphList.value.splice(index, 1); // 删除指定元素
-                ElMessage.success("删除成功!");
+                api.delUserTable(contextMenuId.value, (ok: string) => {
+                    graphList.value.splice(index, 1); // 删除指定元素
+                    ElMessage.success("删除成功!");
+                    if (contextMenuId.value === nowGraphId.value) {
+                        nowGraphId.value = -1;
+                        getAllChartData();
+                    }
+                }, () => {
+
+                }) 
             }
         },
     });
@@ -1128,6 +1138,7 @@ onMounted(async () => {
 const addNodeToChart = async (node: Node | null) => {
     if (node !== null)
         webkitDep.nodes.push(node);
+    console.log(webkitDep);
     createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
@@ -1288,30 +1299,39 @@ const uploadImgFromNet = (cb: Function) => {
 };
 
 // 添加结点, 并且向后端同步
-const addNodeFromNet = (categoryId: number) => {
-    const node: Node = {
-        id: 0,
-        name: nodeForm.value.name,
-        categoryId: categoryId,
-        category: nodeForm.value.category,
-        img: nodeForm.value.imageUrl,
-        describe: nodeForm.value.describe
-    };
+const addNodeFromNet = async (categoryId: number) => {
+    const apiCall = new Promise((resolve, reject) => {
+        const node: Node = {
+            id: 0,
+            name: nodeForm.value.name,
+            categoryId: categoryId,
+            category: nodeForm.value.category,
+            img: nodeForm.value.imageUrl,
+            describe: nodeForm.value.describe
+        };
 
-    // 添加结点
-    api.addNode(nowGraphId.value, {
-        nodeId: 0,
-        legendId: node.categoryId,
-        name: node.name,
-        imgUrl: node.img,
-        description: node.describe
-    }, (id: number) => {
-        node.id = id;
-        ElMessage.info("添加结点id:" + node.id);
-        addNodeToChart(node);
-    }, () => {
-
+        // 添加结点
+        api.addNode(nowGraphId.value, {
+            nodeId: 0,
+            legendId: node.categoryId,
+            name: node.name,
+            imgUrl: node.img,
+            description: node.describe
+        }, (id: number) => {
+            node.id = id;
+            ElMessage.info("添加结点id:" + node.id);
+            addNodeToChart(node);
+            resolve(id);
+        }, () => {
+            reject();
+        });
     });
+
+    try {
+        await apiCall;
+    } catch {
+
+    }
 };
 
 // 修改结点, 并且同步到后端
@@ -1358,33 +1378,41 @@ const updateNodeFromNet = (categoryId: number) => {
  * @param categoryName 图例名称
  * @param categoryColor 图例颜色
  */
-const addCategoryAndNode = (categoryName: string, categoryColor: string) => {
-    // 如果找到这个图例, 则不用添加
-    const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
-    if (it) {
-        it.color = categoryColor;
-        // 添加结点
-        addNodeFromNet(it.id);
-    } else {
-        // 更新图例, 从后端获取到图例的 id
-        const newCategoryIt = {
-            // TODO: 之后id应该是从数据库中获得
-            id: 0,
-            name: categoryName,
-            color: categoryColor
-        };
-        api.addCategory(nowGraphId.value, {
-            legendId: 0,
-            legendName: newCategoryIt.name,
-            legendColor: newCategoryIt.color
-        }, (id: number) => {
-            newCategoryIt.id = id;
-            webkitDep.categories.push(newCategoryIt);
+const addCategoryAndNode = async (categoryName: string, categoryColor: string) => {
+    const apiCall = new Promise((resolve, reject) => {
+        // 如果找到这个图例, 则不用添加
+        const it = webkitDep.categories.getMapList().find(it => it.name === categoryName);
+        if (it) {
+            it.color = categoryColor;
             // 添加结点
-            addNodeFromNet(id);
-        }, () => {
-
-        });
+            addNodeFromNet(it.id);
+        } else {
+            // 更新图例, 从后端获取到图例的 id
+            const newCategoryIt = {
+                // TODO: 之后id应该是从数据库中获得
+                id: 0,
+                name: categoryName,
+                color: categoryColor
+            };
+            api.addCategory(nowGraphId.value, {
+                legendId: 0,
+                legendName: newCategoryIt.name,
+                legendColor: newCategoryIt.color
+            }, (id: number) => {
+                newCategoryIt.id = id;
+                webkitDep.categories.push(newCategoryIt);
+                // 添加结点
+                addNodeFromNet(id);
+                resolve(id);
+            }, () => {
+                reject();
+            });
+        }
+    });
+    try {
+        await apiCall;
+    } catch {
+        
     }
 };
 
@@ -1435,11 +1463,11 @@ const confirmAddNode = () => {
 
     function fun () {
         // 处理图例 & 添加结点
-        addCategoryAndNode(nodeForm.value.category, legendColor.value);
-
-        // 关闭窗口
-        closeAddNodeDialog();
-        resetAddNodeForm();
+        addCategoryAndNode(nodeForm.value.category, legendColor.value).then(() => {
+            // 关闭窗口
+            closeAddNodeDialog();
+            resetAddNodeForm();
+        });
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl

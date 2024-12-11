@@ -342,4 +342,18 @@ public class ForceGraphController {
         }
         return JsonVo.success("ok");
     }
+
+    @PostMapping("/remove-table")
+    public JsonVo<String> removeTable(
+        HttpServletRequest request,
+        @RequestParam Long userTableId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("删除用户图表 User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        if (!forceGraphService.removeTable(userId, userTableId)) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success("ok");
+    }
 }

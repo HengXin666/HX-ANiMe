@@ -99,8 +99,21 @@ public class EdgeDAO {
      * @param: nodeId
      * @return: int
      **/
-    public int removeAllEdge(Long userId, Long userTableId, Long nodeId) {
+    public int removeAllEdgeByNodeId(Long userId, Long userTableId, Long nodeId) {
         String sql = "DELETE FROM edges WHERE user_id = ? AND user_table_id = ? AND (from_node_id = ? OR to_node_id = ?)";
         return jdbcTemplate.update(sql, userId, userTableId, nodeId, nodeId);
+    }
+
+    /**
+     * @description: 删除指定用户的图表的所有边, 返回删除行数
+     * @author: Heng_Xin
+     * @date: 2024/12/11 11:22
+     * @param: userId
+     * @param: userTableId
+     * @return: int
+     **/
+    public int removeAllEdge(Long userId, Long userTableId) {
+        String sql = "DELETE FROM edges WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId);
     }
 }

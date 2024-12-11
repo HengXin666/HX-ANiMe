@@ -89,4 +89,17 @@ public class UserTablesDAO {
             userTablesDO.getId()
         );
     }
+
+    /**
+     * @description: 删除用户图表, 返回删除行数
+     * @author: Heng_Xin
+     * @date: 2024/12/11 11:19
+     * @param: userId
+     * @param: userTableId
+     * @return: int
+     **/
+    public int removeUserTable(Long userId, Long userTableId) {
+        String sql = "DELETE FROM user_tables WHERE user_id = ? AND id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId);
+    }
 }
