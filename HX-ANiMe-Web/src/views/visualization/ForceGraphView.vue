@@ -8,11 +8,15 @@
                     <el-row align="middle" justify="space-between"
                         style="height: 50px; padding: 10px; background-color: #171717;">
                         <!-- 左侧按钮: 收起 -->
-                        <el-button type="primary" :icon="SwitchFilled" circle
-                            @click="switchSidebarDisplay()"></el-button>
+                        <el-tooltip content="隐藏" placement="bottom">
+                            <el-button type="primary" :icon="SwitchFilled" circle
+                                @click="switchSidebarDisplay()"></el-button>
+                        </el-tooltip>
 
-                        <!-- 右侧按钮: 添加图表 -->
-                        <el-button type="primary" :icon="Edit" circle @click="addGraph()"></el-button>
+                        <!-- 右侧按钮: 新建图表 -->
+                        <el-tooltip content="新建图表" placement="bottom">
+                            <el-button type="primary" :icon="Edit" circle @click="addGraph()"></el-button>
+                        </el-tooltip>
                     </el-row>
                 </div>
 
@@ -46,16 +50,16 @@
 
                         <!-- 修改按钮 -->
                         <div>
-                            <el-button type="text" @click="handleEditChart(contextMenuId)"
-                                :icon="Setting" style="color: gold;">
+                            <el-button type="text" @click="handleEditChart(contextMenuId)" :icon="Setting"
+                                style="color: gold;">
                                 修改
                             </el-button>
                         </div>
 
                         <!-- 删除按钮 -->
                         <div>
-                            <el-button type="text" @click="handleDelChart(contextMenuId)"
-                                :icon="Delete" style="color: #f56c6c;">
+                            <el-button type="text" @click="handleDelChart(contextMenuId)" :icon="Delete"
+                                style="color: #f56c6c;">
                                 删除
                             </el-button>
                         </div>
@@ -67,13 +71,15 @@
         <div v-if="!isSidebarDisplay" class="chart-list-show-btn">
             <el-row align="middle" justify="space-between" class="chart-list-fixed">
                 <!-- 左侧按钮: 收起 -->
-                <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+                <el-tooltip content="显示" placement="bottom">
+                    <el-button type="primary" :icon="SwitchFilled" circle @click="switchSidebarDisplay()"></el-button>
+                </el-tooltip>
             </el-row>
         </div>
 
         <!-- 主内容区域 -->
         <el-main>
-            <div>
+            <div v-show="nowGraphId !== -2">
                 <div ref="chart" style="height: calc(100vh - 60px);"></div>
 
                 <!-- 固定在右下角的按钮组 -->
@@ -236,6 +242,13 @@
                     </template>
                 </el-dialog>
             </div>
+            <div v-if="nowGraphId === -2"
+                style="width: 100%; height: 300px; display: flex; justify-content: center; align-items: center; font-size: 25px;">
+                <h1>
+                    请在 <span style="color: #409EFF;">左侧</span> 选择 <span style="color: #f56c6c;">
+                        <span v-if="graphList.length === 0">新建</span>图表</span>
+                </h1>
+            </div>
         </el-main>
     </el-container>
 </template>
@@ -248,7 +261,16 @@ import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from
 import { useSettingStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import * as api from '@/apis/forceGraph';
-import { RefreshRight, Plus, Setting, DocumentCopy, Edit, SwitchFilled, Picture, Delete } from '@element-plus/icons-vue';
+import {
+    RefreshRight,
+    Plus,
+    Setting,
+    DocumentCopy,
+    Edit,
+    SwitchFilled,
+    Picture,
+    Delete
+} from '@element-plus/icons-vue';
 
 const settingStore = useSettingStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
@@ -354,6 +376,8 @@ const loadCharts = async () => {
             }
             if (graphList.value.length > 0) {
                 nowGraphId.value = graphList.value[0].id;
+            } else {
+                nowGraphId.value = -2; // 要求用户新建图表
             }
             resolve(data);
         }, () => {
@@ -435,7 +459,7 @@ const addGraph = () => {
     };
 
     ElMessageBox({
-        title: "添加图表",
+        title: "新建图表",
         message: h("div", {
             style: "width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
         }, [
@@ -506,11 +530,14 @@ const addGraph = () => {
                         id: id,
                         ...formData
                     })
+                    ElMessage.success("新建图表成功!");
+                    if (nowGraphId.value === -2) {
+                        nowGraphId.value = id;
+                        getAllChartData();
+                    }
                 }, () => {
 
                 });
-                console.log("表单数据：", formData);
-                ElMessage.success("添加成功!");
             }
         },
     });
@@ -666,12 +693,12 @@ const handleDelChart = (id: number) => {
                     graphList.value.splice(index, 1); // 删除指定元素
                     ElMessage.success("删除成功!");
                     if (contextMenuId.value === nowGraphId.value) {
-                        nowGraphId.value = -1;
+                        nowGraphId.value = -2;
                         getAllChartData();
                     }
                 }, () => {
 
-                }) 
+                })
             }
         },
     });
@@ -1138,7 +1165,6 @@ onMounted(async () => {
 const addNodeToChart = async (node: Node | null) => {
     if (node !== null)
         webkitDep.nodes.push(node);
-    console.log(webkitDep);
     createForceNodeData().then(nodeData => {
         if (myChart.value) {
             myChart.value.setOption({
@@ -1412,7 +1438,7 @@ const addCategoryAndNode = async (categoryName: string, categoryColor: string) =
     try {
         await apiCall;
     } catch {
-        
+
     }
 };
 
