@@ -32,6 +32,22 @@ public class RandomStringUtils {
     }
 
     /**
+     * @description: 生成26个字母+0~9数字的随机字符串
+     * @author: Heng_Xin
+     * @date: 2024/12/12 16:42
+     * @param: length
+     * @return: String
+     **/
+    public static String generateRandomAlphaNumeric(int length) {
+        StringBuilder result = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            int index = RANDOM.nextInt(62);
+            result.append(CHARACTERS.charAt(index));
+        }
+        return result.toString();
+    }
+
+    /**
      * @description: 生成随机字符串
      * @author: Heng_Xin
      * @date: 2024/11/1 10:42

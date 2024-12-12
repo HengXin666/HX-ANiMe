@@ -103,11 +103,15 @@
                     <div v-if="addNodeAdvancedOptions" class="dialog-add-node">
                         <el-form-item label="Secret API Key">
                             <div style="display: flex; align-items: center; width: 100%;">
-                                <el-input v-model="apiKey" readonly style="margin-right: 10px;" />
-                                <el-icon @click="copyApiKey" style="right: 35px;">
-                                    <DocumentCopy />
-                                </el-icon>
-                                <el-button @click="fetchApiKey">获取</el-button>
+                                <el-input v-model="apiKey" readonly style="margin-right: 20px;" />
+                                <el-tooltip content="复制" placement="bottom">
+                                    <el-icon @click="copyApiKey" style="right: 10px;">
+                                        <DocumentCopy />
+                                    </el-icon>
+                                </el-tooltip>
+                                <el-tooltip content="会生成一个新的ApiKey, 之前的将失效" placement="bottom">
+                                    <el-button @click="fetchApiKey">获取</el-button>
+                                </el-tooltip>
                             </div>
                         </el-form-item>
                     </div>
@@ -549,6 +553,9 @@ const addGraph = () => {
  * @param id 
  */
 const handleLoadChart = (id: number) => {
+    if (nowGraphId.value !== id) {
+        apiKey.value = "";
+    }
     nowGraphId.value = id;
     getAllChartData();
 };

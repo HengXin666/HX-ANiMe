@@ -3,6 +3,7 @@ package com.hx.pojo.DO.forcegraph;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -14,29 +15,25 @@ import java.time.LocalDateTime;
  * @Version: 1.0
  */
 
+class GraphApiKeyId implements Serializable {
+    private Long userId;
+    private Long userTableId;
+}
+
 @Data
 @Entity
-@Table(
-    name = "GraphApiKeys",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "userTableId"})
-)
+@Table(name = "graph_api_keys")
 public class GraphApiKeyDO {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long graphApiKeyId;
+    @EmbeddedId
+    GraphApiKeyId id;
 
-    @Column(nullable = false)
-    private Long userId;
-
-    @Column(nullable = false)
-    private Long userTableId;
-
-    @Column(nullable = false, length = 64)
+    @Column(name = "api_key", nullable = false, length = 64)
     private String apiKey; // md5
 
-    @Column(nullable = false)
+    @Column(name = "create_time", nullable = false)
     private LocalDateTime createTime;
 
-    @Column(nullable = false)
+    @Column(name = "update_time", nullable = false)
     private LocalDateTime updateTime;
 }
+

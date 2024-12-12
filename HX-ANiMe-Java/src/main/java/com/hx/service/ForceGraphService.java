@@ -350,8 +350,8 @@ public class ForceGraphService {
      * @return: String
      **/
     public String getApiKey(Long userId, Long userTableId) {
-        String apiKey = RandomStringUtils.generateRandomString(16)
-                + RandomStringUtils.generateRandomString((int) ((userId + userTableId) % 16));
+        String apiKey = RandomStringUtils.generateRandomAlphaNumeric(32)
+                + RandomStringUtils.generateRandomAlphaNumeric((int) ((userId + userTableId) % 16));
         if (!graphApiKeyDAO.addGraphApiKey(userId, userTableId, Md5Utils.md5(apiKey))) {
             return null;
         }

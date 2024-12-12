@@ -28,7 +28,7 @@ public class GraphApiKeyDAO {
      * @return: boolean
      **/
     public boolean addGraphApiKey(Long userId, Long userTableId, String apiMd5) {
-        String sql = "INSERT INTO graph_api_keys (user_id, user_table_id, api_key, create_time, update_time) VALUES (?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE api_key = ?, update_time = NOW()";
-        return jdbcTemplate.update(sql, userId, userTableId, apiMd5, apiMd5) > 0;
+        String sql = "INSERT INTO graph_api_keys (user_id, user_table_id, api_key, create_time, update_time) VALUES (?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE api_key = VALUES(api_key), update_time = NOW(), create_time = create_time;";
+        return jdbcTemplate.update(sql, userId, userTableId, apiMd5) > 0;
     }
 }
