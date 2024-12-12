@@ -16,6 +16,7 @@ import com.hx.utils.RandomStringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -356,5 +357,16 @@ public class ForceGraphService {
             return null;
         }
         return apiKey;
+    }
+
+    /**
+     * @description: 根据API Key获取用户ID和图表ID
+     * @author: Heng_Xin
+     * @date: 2024/12/12 22:24
+     * @param: apiKey
+     * @return: Pair<Long,Long> <用户ID, 图表ID> or null
+     **/
+    public Pair<Long, Long> getUserIdAndUserTableIdByApiKey(String apiKey) {
+        return graphApiKeyDAO.getUserIdAndUserTableIdByApiKey(Md5Utils.md5(apiKey));
     }
 }
