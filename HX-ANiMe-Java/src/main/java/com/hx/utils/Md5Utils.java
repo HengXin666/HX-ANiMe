@@ -22,4 +22,15 @@ public class Md5Utils {
     public static String md5(String password, String salt) {
         return DigestUtils.md5DigestAsHex((salt + password).getBytes());
     }
+
+    /**
+     * @description: md5加密
+     * @author: Heng_Xin
+     * @date: 2024/12/12 16:03
+     * @param: str
+     * @return: String
+     **/
+    public static String md5(String str) {
+        return DigestUtils.md5DigestAsHex(str.getBytes());
+    }
 }

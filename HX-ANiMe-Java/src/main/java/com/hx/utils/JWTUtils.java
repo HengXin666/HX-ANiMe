@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.Date;
 
 public class JWTUtils {
-    public static String SECRET_KEY = "!@#$^HengXin%Loli0721_-"; // 密钥
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60; // 过期时间: 1小时
+    public static String SECRET_KEY; // 密钥
+    public static long EXPIRATION_TIME; // 过期时间
 
-    // 生成JWT，传入id和name
+    // 生成JWT, 传入id和name
     public static String generateToken(Long id, String name) {
         Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY);
         return JWT.create()
@@ -23,7 +23,7 @@ public class JWTUtils {
                 .sign(algorithm);
     }
 
-    // 验证JWT是否合法，并检查是否过期
+    // 验证JWT是否合法, 并检查是否过期
     public static boolean validateToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY);
@@ -38,9 +38,6 @@ public class JWTUtils {
             // 提取Token中的id和name
             Long id = decodedJWT.getClaim("id").asLong();
             String name = decodedJWT.getClaim("name").asString();
-
-            // 可选：在这里可以查询数据库进行进一步验证，确保用户的 `id` 和 `name` 仍然是有效的
-            // 例如：可以验证数据库中是否有该用户 ID，或验证其他业务逻辑相关信息
 
             return id != null && name != null; // 确保 id 和 name 存在，并且符合预期
         } catch (Exception e) {

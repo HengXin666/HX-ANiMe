@@ -343,6 +343,14 @@ public class ForceGraphController {
         return JsonVo.success("ok");
     }
 
+    /**
+     * @description: 删除图表
+     * @author: Heng_Xin
+     * @date: 2024/12/12 15:45
+     * @param: request
+     * @param: userTableId
+     * @return: JsonVo<String>
+     **/
     @PostMapping("/remove-table")
     public JsonVo<String> removeTable(
         HttpServletRequest request,
@@ -355,5 +363,28 @@ public class ForceGraphController {
             return JsonVo.fail(null);
         }
         return JsonVo.success("ok");
+    }
+
+    /**
+     * @description: 获取 api-key (每个用户每个图表唯一)
+     * @author: Heng_Xin
+     * @date: 2024/12/12 16:07
+     * @param: request
+     * @param: userTableId
+     * @return: JsonVo<String>
+     **/
+    @PostMapping("/get-api-key")
+    public JsonVo<String> getApiKey(
+        HttpServletRequest request,
+        @RequestParam Long userTableId
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        String userName = (String) request.getAttribute("userName");
+        log.info("获取api-key User ID: {}, User Name: {}, userTableId: {}", userId, userName, userTableId);
+        String res = forceGraphService.getApiKey(userId, userTableId);
+        if (res == null) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(res);
     }
 }

@@ -103,6 +103,31 @@ export const getUserTables = (success, fail) => {
 };
 
 /**
+ * 获取当前表的ApiKey
+ * @param {*} userTableId 
+ * @param {*} success 
+ * @param {*} fail 
+ */
+export const getApiKey = (userTableId, success, fail) => {
+	Request.requestJson(Request.POST, currBaseUrl + "get-api-key?userTableId=" + userTableId)
+		.then((data) => {
+			if (data) {
+				// 执行成功回调
+				success(data.data);
+				return;
+			}
+			// 执行失败回调
+			fail();
+		})
+		.catch((err) => {
+			// 打印错误信息
+			console.warn(err);
+			// 执行失败回调
+			fail();
+		});
+};
+
+/**
  * 添加图例
  * @param userTableId 当前表id
  * @param categoryData 图例数据

@@ -28,6 +28,8 @@ spring:
 
 jwt:
   secret-key: "!@#$^HengXin%Loli0721_-"
+  # 过期时间: (一天) | 单位: 毫秒
+  expiration-time: 86400000
 
 file:
   # 文件存储路径

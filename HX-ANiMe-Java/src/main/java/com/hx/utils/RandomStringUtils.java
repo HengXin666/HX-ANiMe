@@ -16,17 +16,28 @@ public class RandomStringUtils {
     private static final int LENGTH = 16;
 
     /**
+     * @description: 生成指定长度的随机字符串
+     * @author: Heng_Xin
+     * @date: 2024/12/12 15:54
+     * @param: length
+     * @return: String
+     **/
+    public static String generateRandomString(int length) {
+        StringBuilder result = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            int index = RANDOM.nextInt(CHARACTERS.length());
+            result.append(CHARACTERS.charAt(index));
+        }
+        return result.toString();
+    }
+
+    /**
      * @description: 生成随机字符串
      * @author: Heng_Xin
      * @date: 2024/11/1 10:42
      * @return: String
      **/
     public static String generateRandomString() {
-        StringBuilder result = new StringBuilder(LENGTH);
-        for (int i = 0; i < LENGTH; ++i) {
-            int index = RANDOM.nextInt(CHARACTERS.length());
-            result.append(CHARACTERS.charAt(index));
-        }
-        return result.toString();
+        return generateRandomString(LENGTH);
     }
 }

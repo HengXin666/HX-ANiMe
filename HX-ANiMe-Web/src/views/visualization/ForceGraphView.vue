@@ -1217,8 +1217,11 @@ const apiKey = ref<string>(''); // 定义 API Key，初始为空
 
 // 获取 API Key 的函数
 const fetchApiKey = () => {
-    // TODO 在这里可以调用接口获取 API Key
-    apiKey.value = "your-secret-api-key"; // 模拟赋值
+    api.getApiKey(nowGraphId.value, (key: string) => {
+        apiKey.value = key;
+    }, () => {
+        
+    })
 };
 
 // 复制 API Key 到剪贴板

@@ -1,9 +1,6 @@
 package com.hx.service;
 
-import com.hx.DAO.forcegraph.EdgeDAO;
-import com.hx.DAO.forcegraph.LegendDAO;
-import com.hx.DAO.forcegraph.NodeDAO;
-import com.hx.DAO.forcegraph.UserTablesDAO;
+import com.hx.DAO.forcegraph.*;
 import com.hx.config.GlobalConfig;
 import com.hx.pojo.DO.forcegraph.EdgeDO;
 import com.hx.pojo.DO.forcegraph.LegendDO;
@@ -13,6 +10,9 @@ import com.hx.pojo.DTO.forcegraph.UserTablesDTO;
 import com.hx.pojo.DTO.forcegraph.EdgeDTO;
 import com.hx.pojo.DTO.forcegraph.LegendDTO;
 import com.hx.pojo.DTO.forcegraph.NodeDTO;
+import com.hx.utils.JWTUtils;
+import com.hx.utils.Md5Utils;
+import com.hx.utils.RandomStringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,10 +45,8 @@ public class ForceGraphService {
     private GlobalConfig globalConfig;
     @Autowired
     private UserTablesDAO userTablesDAO;
-
-    // 保存文件的根路径, 通过读取, application.yaml配置文件
-    @Value("${file.path}")
-    private String FILE_PATH;
+    @Autowired
+    private GraphApiKeyDAO graphApiKeyDAO;
 
     /**
      * @description: 获取图例
@@ -193,14 +191,14 @@ public class ForceGraphService {
         log.info("准备上传文件，路径: {}", filePath);
 
         // 创建文件夹
-        File dir = new File(FILE_PATH + dirPath);
+        File dir = new File(globalConfig.getFilePath() + dirPath);
         if (!dir.exists() && !dir.mkdirs()) {
-            log.error("创建文件夹失败: {}", FILE_PATH + dirPath);
+            log.error("创建文件夹失败: {}", globalConfig.getFilePath() + dirPath);
             return null;
         }
 
         // 保存文件
-        File dest = new File(FILE_PATH + filePath);
+        File dest = new File(globalConfig.getFilePath() + filePath);
         if (dest.exists()) {
             log.error("上传图片失败: 文件已存在");
             return null;
@@ -213,7 +211,7 @@ public class ForceGraphService {
             return null;
         }
 
-        log.info("文件上传成功，路径: {}", FILE_PATH + filePath);
+        log.info("文件上传成功，路径: {}", globalConfig.getFilePath() + filePath);
         return globalConfig.getServerUrl() + filePath;
     }
     
@@ -341,5 +339,22 @@ public class ForceGraphService {
         edgeDAO.removeAllEdge(userId, userTableId);
         legendDAO.removeAllLegend(userId, userTableId);
         return true;
+    }
+
+    /**
+     * @description: 获取API Key
+     * @author: Heng_Xin
+     * @date: 2024/12/12 15:49
+     * @param: userId
+     * @param: userTableId
+     * @return: String
+     **/
+    public String getApiKey(Long userId, Long userTableId) {
+        String apiKey = RandomStringUtils.generateRandomString(16)
+                + RandomStringUtils.generateRandomString((int) ((userId + userTableId) % 16));
+        if (!graphApiKeyDAO.addGraphApiKey(userId, userTableId, Md5Utils.md5(apiKey))) {
+            return null;
+        }
+        return apiKey;
     }
 }
