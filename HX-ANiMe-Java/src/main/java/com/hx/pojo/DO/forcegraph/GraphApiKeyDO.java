@@ -22,7 +22,13 @@ class GraphApiKeyId implements Serializable {
 
 @Data
 @Entity
-@Table(name = "graph_api_keys")
+@Table(
+    name = "graph_api_keys",
+    indexes = { @Index(
+        name = "idx_api_key",
+        columnList = "api_key"
+    )}
+)
 public class GraphApiKeyDO {
     @EmbeddedId
     GraphApiKeyId id;

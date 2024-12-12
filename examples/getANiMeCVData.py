@@ -16,8 +16,15 @@ class Legend:
         self.legendName = ""  # 图例名称
         self.legendColor = "" # 图例颜色
 
+    def toDict(self):
+        return {
+            "legendId": self.legendId,
+            "legendName": self.legendName,
+            "legendColor": self.legendColor
+        }
+
     def __repr__(self):
-        return f"Legend(legendId={self.legendId}, legendName='{self.legendName}', legendColor='{self.legendColor}')"
+        return json.dumps(self.toDict())
 
 class Node:
     """节点"""
@@ -28,9 +35,17 @@ class Node:
         self.imgUrl = ""      # 节点图片
         self.description = "" # 节点描述
 
+    def toDict(self):
+        return {
+            "nodeId": self.nodeId,
+            "legendId": self.legendId,
+            "name": self.name,
+            "imgUrl": self.imgUrl,
+            "description": self.description
+        }
+
     def __repr__(self):
-        return (f"Node(nodeId={self.nodeId}, legendId={self.legendId}, "
-                f"name='{self.name}', imgUrl='{self.imgUrl}', description='{self.description}')")
+        return json.dumps(self.toDict())
 
 class Edge:
     """边"""
@@ -39,8 +54,15 @@ class Edge:
         self.fromNodeId = 0 # 源节点id
         self.toNodeId = 0   # 目标节点id
     
+    def toDict(self):
+        return {
+            "edgeId": self.edgeId,
+            "fromNodeId": self.fromNodeId,
+            "toNodeId": self.toNodeId
+        }
+
     def __repr__(self):
-        return (f"Edge(edgeId={self.edgeId}, fromNodeId={self.fromNodeId}, toNodeId='{self.toNodeId}')")
+        return json.dumps(self.toDict())
     
 def mapToObject(data, cls):
     """将字典数据映射到指定类的实例中"""
@@ -61,20 +83,36 @@ class HX_ANiMe_Api:
         self.baseUrl = baseUrl
         self.headers = headers
 
-    def _post(self, endpoint):
-        """通用 POST 方法"""
+    def _post(self, endpoint: str, data=None):
+        """私有post方法
+
+        Args:
+            endpoint (str): 端点
+            data (鸭子类型(需要可以调用`.toDict()`方法), 可选): 需要传输的对象. Defaults to None.
+
+        Raises:
+            ValueError: 请求报错信息
+
+        Returns:
+            _type_: 请求结果.data的内容
+        """
         url = f"{self.baseUrl}{endpoint}"
         try:
-            response = requests.post(url, headers=self.headers)
+            if data != None:
+                data = data.toDict()
+
+            response = requests.post(url, headers=self.headers, json=data)
             response.encoding = 'utf-8'
-            data = response.json()
-            if data.get("code") != 10000:
-                raise ValueError(data.get("message", "未知错误"))
-            return data.get("data")
+            responseData = response.json()
+
+            if responseData.get("code") != 10000:
+                raise ValueError(responseData.get("message", "未知错误"))
+            
+            return responseData.get("data")
         except (requests.RequestException, json.JSONDecodeError) as e:
             raise ValueError(f"请求失败: {e}")
 
-    def getLegend(self) -> list[Legend]:
+    def getLegends(self) -> list[Legend]:
         """获取图例列表
 
         Returns:
@@ -100,6 +138,17 @@ class HX_ANiMe_Api:
         """
         data = self._post("/force-graph-api/get-edges")
         return [mapToObject(item, Edge) for item in data]
+    
+    def addLegend(self, legend: Legend) -> int:
+        """添加图例
+
+        Args:
+            legend (Legend): 图例对象
+
+        Returns:
+            int: 图例id
+        """
+        return self._post("/force-graph-api/add-legend", legend)
     
 # } // === End === HXANiMe-py-class === End ===
 
@@ -174,20 +223,22 @@ def getANiMeDataByCharactersSubjectHtml(html: str):
 
 if __name__ == '__main__':
     # 用户图表 apiKey
-    apiKey = "A02bKH0tkfh2SIRwTLpv9s0woVYN7KYfae"
+    apiKey = "sXfjEJOiySe2wlEychkn4KsTvB0dRzqSr5s"
+    # 测试: "sXfjEJOiySe2wlEychkn4KsTvB0dRzqSr5s"
+    # 番剧: "TSEf3cbXP8t1XxQXEMQInUIOpQNVhhjM4h"
 
     # 后端服务器URL
     ANiMeUrl = "http://localhost:28205"
 
     HXANiMeHeaders = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
-        "apiKey": apiKey
+        "apiKey": apiKey,
     }
 
     api = HX_ANiMe_Api(ANiMeUrl, HXANiMeHeaders)
 
     try:
-        legends = api.getLegend()
+        legends = api.getLegends()
         for legend in legends:
             print(legend)
 
@@ -196,5 +247,13 @@ if __name__ == '__main__':
 
         for it in api.getEdges():
             print(it)
+
+        """ 示例: 添加图例, 输出图例id
+        legend = Legend()
+        legend.legendName = "计算机书籍"
+        legend.legendColor = "#990099"
+
+        print(api.addLegend(legend))
+        """
     except ValueError as e:
         print(f"错误: {e}")

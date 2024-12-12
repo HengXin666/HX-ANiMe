@@ -8,6 +8,7 @@ import com.hx.service.ForceGraphService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -79,5 +80,27 @@ public class ForceGraphApiController {
             return JsonVo.fail(null);
         }
         return JsonVo.success(forceGraphService.getEdges(pair.getFirst(), pair.getSecond()));
+    }
+
+    /**
+     * @description: 添加图例, 返回图例id
+     * @author: Heng_Xin
+     * @date: 2024/12/12 23:27
+     * @param: apiKey
+     * @param: legendDTO
+     * @return: JsonVo<Long>
+     **/
+    @RequestMapping("/add-legend")
+    public JsonVo<Long> addLegend(
+        @RequestHeader("apiKey") String apiKey,
+        @RequestBody LegendDTO legendDTO
+    ) {
+        // 校验 apiKey, 返回对应的userId, userTableId
+        Pair<Long, Long> pair = forceGraphService.getUserIdAndUserTableIdByApiKey(apiKey);
+        if (pair == null) {
+            return JsonVo.fail(null);
+        }
+        log.info("添加图例 Legend Name: {}", legendDTO.getLegendName());
+        return JsonVo.success(forceGraphService.addLegend(pair.getFirst(), pair.getSecond(), legendDTO));
     }
 }
