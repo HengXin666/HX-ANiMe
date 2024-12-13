@@ -9,11 +9,12 @@ UserAgent = { # 现代反爬, 不屑于从'User-Agent'判断, 所以有就可以
 }
 
 class ANiMeData:
-    def __init__(self, jpName: str = "", cnName: str = "", cvName: str = "", imgSrc: str = ""):
+    def __init__(self, jpName: str = "", cnName: str = "", cvName: str = "", roleImgSrc: str = "", cvImgSrc: str = ""):
         self.jpName = jpName
         self.cnName = cnName
         self.cvName = cvName
-        self.imgSrc = imgSrc
+        self.roleImgSrc = roleImgSrc
+        self.cvImgSrc = cvImgSrc
 
 def getSubject(subjectId: int):
     """获取主题
@@ -62,7 +63,7 @@ def getANiMeDataBySubjectHtml(html: str):
 
 def getANiMeDataByCharactersSubjectHtml(html: str) -> list[ANiMeData]:
     """
-    正则表达式解析 [Subject的Characters] HTML 获取番剧的角色名称、CV信息和角色图片 URL
+    正则表达式解析 [Subject的Characters] HTML 获取番剧的角色名称、CV信息、CV图片URL和角色图片URL
 
     Args:
         html (str): 网页 HTML
@@ -72,17 +73,22 @@ def getANiMeDataByCharactersSubjectHtml(html: str) -> list[ANiMeData]:
     """
     # 更新正则表达式，增加 img src 的匹配
     pattern = re.compile(
-        r'<a[^>]*class="avatar"[^>]*><img src="([^"]+)"[^>]*></a>.*?'  # 匹配角色 img 的 src
-        r'<h2><a href="[^"]*" class="l">([^<]+)</a> <span class="tip"> / ([^<]+)</span></h2>.*?'
-        r'<p><a href="[^"]*" class="l">([^<]+)</a>',  # 匹配角色日文名、中文名和 CV
-        re.DOTALL
+        r'<a[^>]*class="avatar"><img\s+src="([^"]+)"[^>]*></a>.*?'  # 角色图片URL
+        r'<h2><a[^>]*class="l">([^<]+)</a>\s*<span[^>]*>\s*/\s*([^<]+)</span></h2>.*?'  # 角色名字（日文和中文）
+        r'<div\s+class="actorBadge[^>]*>.*?<a[^>]*class="avatar"><img\s+src="([^"]+)"[^>]*></a>.*?'  # CV图片URL
+        r'<p><a[^>]*class="l">([^<]+)</a>',  # CV名字
+        re.DOTALL  # 支持换行符
     )
     matches = pattern.findall(html)
 
     res: list[ANiMeData] = []
     for match in matches:
-        img_src, japanese_name, chinese_name, cv_name = match
-        res.append(ANiMeData(japanese_name, chinese_name, cv_name, img_src))
+        role_img_src, japanese_name, chinese_name, cv_img_src, cv_name = match
+        # 去除 ?数字 部分
+        role_img_src = role_img_src.split('?')[0]
+        cv_img_src = cv_img_src.split('?')[0]
+        # print(role_img_src, japanese_name, chinese_name, cv_name, cv_img_src)
+        res.append(ANiMeData(japanese_name, chinese_name, cv_name, role_img_src, cv_img_src))
     return res
 
 def getANiMeTitleByCharactersSubjectHtml(html: str) -> tuple[str, str]:
@@ -134,13 +140,13 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
         titleNodeId = api.addNode(Node(legendId=legendMap["番剧"].legendId, name=title, imgUrl=titleImgUrl))
 
         for it in animeList:
-            # 添加CV结点
+            # 添加CV结点: 这样写, 主要是考虑了一个声优可能配了多个番的角色, 需要复用之前存在的结点
             try:
                 cvNodeId = nodeMap.findByName(it.cvName).nodeId
             except:
-                cvNodeId = nodeMap.ensure(api, Node(legendId=legendMap["声优"].legendId, name=it.cvName))
+                cvNodeId = nodeMap.ensure(api, Node(legendId=legendMap["声优"].legendId, name=it.cvName, imgUrl=it.cvImgSrc))
             # 添加角色结点
-            roleNodeId = nodeMap.ensure(api, Node(legendId=legendMap["角色"].legendId, name=f"{it.cnName} ({it.jpName})", imgUrl=it.imgSrc))
+            roleNodeId = nodeMap.ensure(api, Node(legendId=legendMap["角色"].legendId, name=f"{it.cnName} ({it.jpName})", imgUrl=it.roleImgSrc))
             # 添加边: 角色 -> 番剧
             api.addEdge(Edge(fromNodeId=roleNodeId, toNodeId=titleNodeId))
             # 添加边: 声优 -> 角色
@@ -149,12 +155,10 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
 
 if __name__ == '__main__':
     # 用户图表 apiKey
-    apiKey = "QSGl9EGGEhjdy59RBqEqXdXsmVFJoGhUIyp"
-    # 测试: "sXfjEJOiySe2wlEychkn4KsTvB0dRzqSr5s"
-    # 番剧: "QSGl9EGGEhjdy59RBqEqXdXsmVFJoGhUIyp"
+    apiKey = "zS8J9vBLPsWlro2ppsI6ayZkBOGxbp434BpmG"
 
     # 后端服务器URL
     ANiMeUrl = "http://localhost:28205"
 
     # [88287, 425998, 385209]
-    main(ANiMeUrl, apiKey, [385209])
+    main(ANiMeUrl, apiKey, [])
