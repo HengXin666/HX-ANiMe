@@ -339,6 +339,8 @@ public class ForceGraphService {
         nodeDAO.removeAllNode(userId, userTableId);
         edgeDAO.removeAllEdge(userId, userTableId);
         legendDAO.removeAllLegend(userId, userTableId);
+        // 删除对应的apiKey
+        graphApiKeyDAO.removeGraphApiKey(userId, userTableId);
         return true;
     }
 

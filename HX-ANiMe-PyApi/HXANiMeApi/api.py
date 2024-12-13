@@ -1,124 +1,8 @@
 import requests, json
 
+from .DTO import *
+
 # === Begin === HXANiMe-py-class === Begin === {
-class Legend:
-    """图例"""
-    def __init__(self, id: int = 0, name: str = "", color: str = ""):
-        self.legendId = id       # 图例id
-        self.legendName = name   # 图例名称
-        self.legendColor = color # 图例颜色
-
-    def toDict(self):
-        return {
-            "legendId": self.legendId,
-            "legendName": self.legendName,
-            "legendColor": self.legendColor
-        }
-
-    def __repr__(self):
-        return json.dumps(self.toDict())
-
-class Node:
-    """节点"""
-    def __init__(self, id: int = 0, legendId: int = 0, name: str = "", imgUrl: str = "", description: str = ""):
-        self.nodeId = id               # 节点id
-        self.legendId = legendId       # 所属图例id
-        self.name = name               # 节点名称
-        self.imgUrl = imgUrl           # 节点图片
-        self.description = description # 节点描述
-
-    def toDict(self):
-        return {
-            "nodeId": self.nodeId,
-            "legendId": self.legendId,
-            "name": self.name,
-            "imgUrl": self.imgUrl,
-            "description": self.description
-        }
-
-    def __repr__(self):
-        return json.dumps(self.toDict())
-
-class Edge:
-    """边"""
-    def __init__(self, id: int = 0, fromNodeId: int = 0, toNodeId: int = 0):
-        self.edgeId = id             # 边id
-        self.fromNodeId = fromNodeId # 源节点id
-        self.toNodeId = toNodeId     # 目标节点id
-    
-    def toDict(self):
-        return {
-            "edgeId": self.edgeId,
-            "fromNodeId": self.fromNodeId,
-            "toNodeId": self.toNodeId
-        }
-
-    def __repr__(self):
-        return json.dumps(self.toDict())
-
-class LegendIdMap:
-    """图例映射, 提供 id -> 图例, name -> 图例
-    """
-    def __init__(self, legendList: list[Legend]):
-        """图例映射构造
-
-        Args:
-            legendList (list[Legend]): 图例列表
-        """
-        self.idMap = {}
-        self.nameMap = {}
-        for it in legendList:
-            self.idMap[it.legendId] = it
-            self.nameMap[it.legendName] = it
-    
-    def findByName(self, name: str) -> Legend:
-        """通过name查找
-
-        Args:
-            name (str): 图例名称
-
-        Returns:
-            Legend: 图例对象 | (查找不到: 抛异常)
-        """
-        return self.nameMap[name]
-    
-    def __getitem__(self, name: str) -> Legend:
-        """重载`[]`运算符, 以`name`作为键查找
-
-        Args:
-            name (str): 图例name
-
-        Returns:
-            Legend: 图例
-        """
-        return self.findByName(name)
-    
-    def findById(self, id: int) -> Legend:
-        """通过id查找
-
-        Args:
-            id (int): 图例id
-
-        Returns:
-            Legend: 图例 | (查找不到: 抛异常)
-        """
-        return self.idMap[id]
-    
-    def ensure(self, api: object, legend: Legend) -> int:
-        """确保该图例存在, 如果不存在则添加
-
-        Args:
-            api (后端api类): api类, 需要提供`addLegend`方法
-            legend (Legend): 图例
-
-        Returns:
-            int: `0`则是成功, `> 0`则是返回图例的id
-        """
-        try:
-            self.findByName(legend.legendName)
-            return 0
-        except:
-            return api.addLegend(legend)
 
 def mapToObject(data, cls):
     """将字典数据映射到指定类的实例中"""
@@ -128,7 +12,7 @@ def mapToObject(data, cls):
             setattr(obj, key, value)
     return obj
 
-class HX_ANiMe_Api:
+class ANiMeApi:
     def __init__(self, baseUrl: str, apiKey: str):
         """后端 API 封装
 

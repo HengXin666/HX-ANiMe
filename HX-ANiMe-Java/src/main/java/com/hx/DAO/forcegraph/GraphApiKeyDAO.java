@@ -44,4 +44,17 @@ public class GraphApiKeyDAO {
         String sql = "SELECT user_id, user_table_id FROM graph_api_keys WHERE api_key = ?";
         return jdbcTemplate.query(sql, (rs, rowNum) -> Pair.of(rs.getLong("user_id"), rs.getLong("user_table_id")), md5).stream().findFirst().orElse(null);
     }
+
+    /**
+     * @description: 删除图表api密匙
+     * @author: Heng_Xin
+     * @date: 2024/12/13 21:47
+     * @param: userId
+     * @param: userTableId
+     * @return: int 影响的行数
+     **/
+    public int removeGraphApiKey(Long userId, Long userTableId) {
+        String sql = "DELETE FROM graph_api_keys WHERE user_id = ? AND user_table_id = ?";
+        return jdbcTemplate.update(sql, userId, userTableId);
+    }
 }

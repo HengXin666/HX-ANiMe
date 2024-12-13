@@ -1,0 +1,27 @@
+# Python bytecode
+*.pyc
+
+# 配置
+config/
+
+# 输出
+output/
+
+# 打包
+dist/
+build/
+
+# Logs
+*.log
+
+# Virtualenv
+venv/
+
+# Build
+build/
+dist/
+__pycache__/
+
+# IDE
+.vscode/
+.idea/

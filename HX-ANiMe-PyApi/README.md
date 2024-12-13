@@ -13,8 +13,8 @@
 ### 2.1 导包
 
 ```py
-# 导入 HX-ANiMe-PyApi 包
-from HXANiMeApi.api import *
+# 导入 HX-ANiMe-PyApi 包 (当然, 您也可以按需导入)
+from HXANiMeApi import *
 ```
 
 ### 2.2 接口说明
@@ -27,7 +27,7 @@ apiKey = "请填写你复制过来的apiKey"
 ANiMeUrl = "http://localhost:28205"
 
 # 构造得出 api
-api = HX_ANiMe_Api(ANiMeUrl, apiKey)
+api = ANiMeApi(ANiMeUrl, apiKey)
 ```
 
 #### 2.2.2 查询接口
