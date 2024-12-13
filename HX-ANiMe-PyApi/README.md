@@ -17,7 +17,51 @@
 from HXANiMeApi import *
 ```
 
-### 2.2 接口说明
+### 2.2 数据类型说明
+
+- class: `Legend` / `Node` / `Edge`
+- 所处包: `./HXANiMeApi/DTO.py`
+
+#### 2.2.1 图例数据
+
+```py
+class Legend:
+    """图例"""
+    def __init__(self, id: int = 0, name: str = "", color: str = ""):
+        self.legendId = id       # 图例id
+        self.legendName = name   # 图例名称
+        self.legendColor = color # 图例颜色
+```
+
+### 2.2.2 结点数据
+
+```py
+class Node:
+    """节点"""
+    def __init__(self, id: int = 0, legendId: int = 0, name: str = "", imgUrl: str = "", description: str = ""):
+        self.nodeId = id               # 节点id
+        self.legendId = legendId       # 所属图例id
+        self.name = name               # 节点名称
+        self.imgUrl = imgUrl           # 节点图片
+        self.description = description # 节点描述
+```
+
+### 2.2.3 边数据
+
+```py
+class Edge:
+    """边"""
+    def __init__(self, id: int = 0, fromNodeId: int = 0, toNodeId: int = 0):
+        self.edgeId = id             # 边id
+        self.fromNodeId = fromNodeId # 源节点id
+        self.toNodeId = toNodeId     # 目标节点id
+```
+
+### 2.3 接口说明
+
+- class: `ANiMeApi`
+- 所处包: `./HXANiMeApi/api.py`
+
 #### 2.2.1 初始化api
 ```py
 # 用户图表 apiKey
@@ -51,6 +95,67 @@ except ValueError as e:
 #### 2.2.3 添加数据接口
 
 ```py
+# 添加图例, 如果添加成功, 则返回图例id; 否则同上, 会抛出异常信息
+legendId: int = api.addLegend(Legend(...))
+
 # 添加结点, 如果添加成功, 则返回结点id; 否则同上, 会抛出异常信息
-nodeId: int = api.addNode(Node(legendId=1, name="结点名称", ...))
+nodeId: int = api.addNode(Node(...))
+
+# 添加边
+edgeIdL int = api.addEdge(Edge(...))
 ```
+
+### 2.4 idMap工具类
+
+- class: `LegendIdMap` / `NodeIdMap`
+- 所处包: `./HXANiMeApi/idMap.py`
+
+内部维护了: `id - 元素` 和 `name - 元素` 的`Map`
+
+> [!WARNING]
+> 因为`Map`的`key`是 **唯一** 的, 故当且仅当**元素**的`id`和`name`都不会重复的时候, 才可以使用这个工具类
+>
+> 如果`key`重新重复, 则会**抛出异常**!!!
+>
+> - *因为我认为一个图上不应该出现两个名称一样的结点*
+
+#### 2.4.1 ensure方法
+
+- 以 NodeIdMap 的 ensure 方法为例:
+
+```py
+def ensure(self, api: ANiMeApi, node: Node) -> int:
+    """确保该结点存在, 如果不存在则添加(先后端, 再往map添加)
+
+    Args:
+        api (ANiMeApi): api类, 需要提供`addNode`方法
+        node (Node): 结点
+
+    Returns:
+        int: `0`表示成功, `> 0`表示返回结点的id
+    """
+```
+
+如果我们的`NodeIdMap`对象中没有这个`node`, 则会 **添加** 它(先添加到后端, 后端返回`id`后, 再添加到`idMap`)
+
+使用示例:
+
+```py
+# 构建 ANiMeApi
+api = ANiMeApi(ANiMeUrl, apiKey)
+
+# 获取所有图例
+legendMap = LegendIdMap(api.getLegends())
+
+# 获取当前所有结点
+nodeMap = NodeIdMap(api.getNodes())
+
+# 先判断图例是否存在, 如果不存在则向后端添加
+# 因为返回0是存在, 则可以这样写, 完全确保其存在
+while (legendMap.ensure(api, Legend(name="番剧", color="#FF0099"))
+    | legendMap.ensure(api, Legend(name="声优", color="#99FF00"))
+    | legendMap.ensure(api, Legend(name="角色", color="#0099FF"))):
+    print("添加图例...")
+```
+
+> *具体实例, 可以查看: [番剧信息爬虫, 并且使用keyApi提交到后端](./getANiMeCVData.py)*
