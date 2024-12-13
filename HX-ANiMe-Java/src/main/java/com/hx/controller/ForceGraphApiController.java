@@ -103,4 +103,50 @@ public class ForceGraphApiController {
         log.info("添加图例 Legend Name: {}", legendDTO.getLegendName());
         return JsonVo.success(forceGraphService.addLegend(pair.getFirst(), pair.getSecond(), legendDTO));
     }
+
+    /**
+     * @description: 添加节点, 返回节点id
+     * @author: Heng_Xin
+     * @date: 2024/12/13 9:03
+     * @param: apiKey
+     * @param: nodeDTO
+     * @return: JsonVo<Long>
+     **/
+    @RequestMapping("/add-node")
+    public JsonVo<Long> addNode(
+        @RequestHeader("apiKey") String apiKey,
+        @RequestBody NodeDTO nodeDTO
+    ) {
+        // 校验 apiKey, 返回对应的userId, userTableId
+        Pair<Long, Long> pair = forceGraphService.getUserIdAndUserTableIdByApiKey(apiKey);
+        if (pair == null) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(
+            forceGraphService.addNode(pair.getFirst(), pair.getSecond(), nodeDTO)
+        );
+    }
+
+    /**
+     * @description: 添加边, 返回边id
+     * @author: Heng_Xin
+     * @date: 2024/12/13 9:03
+     * @param: apiKey
+     * @param: edgeDTO
+     * @return: JsonVo<Long>
+     **/
+    @RequestMapping("/add-edge")
+    public JsonVo<Long> addEdge(
+        @RequestHeader("apiKey") String apiKey,
+        @RequestBody EdgeDTO edgeDTO
+    ) {
+        // 校验 apiKey, 返回对应的userId, userTableId
+        Pair<Long, Long> pair = forceGraphService.getUserIdAndUserTableIdByApiKey(apiKey);
+        if (pair == null) {
+            return JsonVo.fail(null);
+        }
+        return JsonVo.success(
+            forceGraphService.addEdge(pair.getFirst(), pair.getSecond(), edgeDTO)
+        );
+    }
 }

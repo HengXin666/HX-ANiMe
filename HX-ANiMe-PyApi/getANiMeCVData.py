@@ -6,15 +6,13 @@ UserAgent = { # 现代反爬, 不屑于从'User-Agent'判断, 所以有就可以
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
 }
 
-mySecretApiKey = ""
-
 # === Begin === HXANiMe-py-class === Begin === {
 class Legend:
     """图例"""
-    def __init__(self):
-        self.legendId = 0     # 图例id
-        self.legendName = ""  # 图例名称
-        self.legendColor = "" # 图例颜色
+    def __init__(self, id: int = 0, name: str = "", color: str = ""):
+        self.legendId = id       # 图例id
+        self.legendName = name   # 图例名称
+        self.legendColor = color # 图例颜色
 
     def toDict(self):
         return {
@@ -28,12 +26,12 @@ class Legend:
 
 class Node:
     """节点"""
-    def __init__(self):
-        self.nodeId = 0       # 节点id
-        self.legendId = 0     # 所属图例id
-        self.name = ""        # 节点名称
-        self.imgUrl = ""      # 节点图片
-        self.description = "" # 节点描述
+    def __init__(self, id: int = 0, legendId: int = 0, name: str = "", imgUrl: str = "", description: str = ""):
+        self.nodeId = id               # 节点id
+        self.legendId = legendId       # 所属图例id
+        self.name = name               # 节点名称
+        self.imgUrl = imgUrl           # 节点图片
+        self.description = description # 节点描述
 
     def toDict(self):
         return {
@@ -49,10 +47,10 @@ class Node:
 
 class Edge:
     """边"""
-    def __init__(self):
-        self.edgeId = 0     # 边id
-        self.fromNodeId = 0 # 源节点id
-        self.toNodeId = 0   # 目标节点id
+    def __init__(self, id: int = 0, fromNodeId: int = 0, toNodeId: int = 0):
+        self.edgeId = id             # 边id
+        self.fromNodeId = fromNodeId # 源节点id
+        self.toNodeId = toNodeId     # 目标节点id
     
     def toDict(self):
         return {
@@ -63,7 +61,71 @@ class Edge:
 
     def __repr__(self):
         return json.dumps(self.toDict())
+
+class LegendIdMap:
+    """图例映射, 提供 id -> 图例, name -> 图例
+    """
+    def __init__(self, legendList: list[Legend]):
+        """图例映射构造
+
+        Args:
+            legendList (list[Legend]): 图例列表
+        """
+        self.idMap = {}
+        self.nameMap = {}
+        for it in legendList:
+            self.idMap[it.legendId] = it
+            self.nameMap[it.legendName] = it
     
+    def findByName(self, name: str) -> Legend:
+        """通过name查找
+
+        Args:
+            name (str): 图例名称
+
+        Returns:
+            Legend: 图例对象 | (查找不到: 抛异常)
+        """
+        return self.nameMap[name]
+    
+    def __getitem__(self, name: str) -> Legend:
+        """重载`[]`运算符, 以`name`作为键查找
+
+        Args:
+            name (str): 图例name
+
+        Returns:
+            Legend: 图例
+        """
+        return self.findByName(name)
+    
+    def findById(self, id: int) -> Legend:
+        """通过id查找
+
+        Args:
+            id (int): 图例id
+
+        Returns:
+            Legend: 图例 | (查找不到: 抛异常)
+        """
+        return self.idMap[id]
+    
+    def ensure(self, api: object, legend: Legend) -> int:
+        """确保该图例存在, 如果不存在则添加
+
+        Args:
+            api (后端api类): api类, 需要提供`addLegend`方法
+            legend (Legend): 图例
+
+        Returns:
+            int: `0`则是成功, `> 0`则是返回图例的id
+        """
+        try:
+            self.findByName(legend.legendName)
+            return 0
+        except:
+            return api.addLegend(legend)
+
 def mapToObject(data, cls):
     """将字典数据映射到指定类的实例中"""
     obj = cls()
@@ -99,7 +161,7 @@ class HX_ANiMe_Api:
         url = f"{self.baseUrl}{endpoint}"
         try:
             if data != None:
-                data = data.toDict()
+                data = data.toDict() # 如果不是本库封装的类, 则没有这个; 则无法使用
 
             response = requests.post(url, headers=self.headers, json=data)
             response.encoding = 'utf-8'
@@ -149,6 +211,28 @@ class HX_ANiMe_Api:
             int: 图例id
         """
         return self._post("/force-graph-api/add-legend", legend)
+    
+    def addNode(self, node: Node) -> int:
+        """添加节点
+
+        Args:
+            node (Node): 节点
+
+        Returns:
+            int: 节点id
+        """
+        return self._post("/force-graph-api/add-node", node)
+    
+    def addEdge(self, edge: Edge) -> int:
+        """添加边
+
+        Args:
+            edge (Edge): 边
+
+        Returns:
+            int: 边id
+        """
+        return self._post("/force-graph-api/add-edge", edge)
     
 # } // === End === HXANiMe-py-class === End ===
 
@@ -221,6 +305,25 @@ def getANiMeDataByCharactersSubjectHtml(html: str):
         japanese_name, chinese_name, cv_name = match
         print(f"日文名: {japanese_name}, 中文名: {chinese_name}, CV: {cv_name}")
 
+def main(ANiMeUrl: str, apiKey: str) -> None:
+    HXANiMeHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+        "apiKey": apiKey,
+    }
+    api = HX_ANiMe_Api(ANiMeUrl, HXANiMeHeaders)
+    # 获取图例
+    legendMap = LegendIdMap(api.getLegends())
+
+    # 先判断图例是否存在, 如果不存在则向后端添加
+    if (legendMap.ensure(api, Legend(name="番剧", color="#FF0099"))
+        | legendMap.ensure(api, Legend(name="声优", color="#99FF00"))
+        | legendMap.ensure(api, Legend(name="角色", color="#0099FF"))):
+        # 有添加图例, 所以更新 legendMap
+        legendMap = LegendIdMap(api.getLegends())
+        
+
+
+
 if __name__ == '__main__':
     # 用户图表 apiKey
     apiKey = "sXfjEJOiySe2wlEychkn4KsTvB0dRzqSr5s"
@@ -235,8 +338,15 @@ if __name__ == '__main__':
         "apiKey": apiKey,
     }
 
-    api = HX_ANiMe_Api(ANiMeUrl, HXANiMeHeaders)
+    main(ANiMeUrl, apiKey)
 
+    api = HX_ANiMe_Api(ANiMeUrl, HXANiMeHeaders)
+    exit()
+    
+    map = LegendIdMap([])
+
+    print(map["番剧"])
+    
     try:
         legends = api.getLegends()
         for legend in legends:
