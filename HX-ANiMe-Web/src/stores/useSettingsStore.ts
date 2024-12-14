@@ -10,6 +10,7 @@ export const useSettingStore = defineStore("setting", {
         },
         // 力导向图设置
         forceOrientedDiagram: {
+            layout: "force",
             force: {
                 edgeLength: [50, 200],
                 repulsion: 100,
@@ -21,12 +22,15 @@ export const useSettingStore = defineStore("setting", {
                 curveness: 0,
                 opacity: 0.75,
             },
+            // 是否显示结点名称
             label: {
                 show: false,
             },
-            emphasis: {
-                label: {
-                    show: true,
+            // 连线样式
+            edgeLabel: {
+                normal: {
+                    // 是否显示连线文本
+                    show: false,
                 },
             },
             nodeShape: {
