@@ -34,8 +34,8 @@ export const useSettingStore = defineStore("setting", {
                 },
             },
             nodeShape: {
-                solidShape: "圆形",
-                imageShape: "圆形",
+                solidShape: "circle",
+                imageShape: "circle",
             },
         },
     }),

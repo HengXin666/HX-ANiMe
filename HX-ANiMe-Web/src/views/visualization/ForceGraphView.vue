@@ -255,44 +255,57 @@
             </div>
 
             <!-- 设置弹窗 -->
-            <el-dialog v-model="showSettingDialog" title="力导向图设置" :draggable="true" width="550px" :close-on-click-modal="false">
+            <el-dialog v-model="showSettingDialog" title="力导向图设置" :draggable="true" width="550px"
+                :close-on-click-modal="false">
                 <!-- 切换栏 -->
                 <el-tabs v-model="activeTab">
                     <!-- 图属性配置 -->
                     <el-tab-pane label="图属性" name="graph">
                         <el-form :model="settingsTmp.forceOrientedDiagram.force" label-width="120px">
+                            <el-tooltip content="不建议修改, 有Bug" placement="top">
+                                <el-form-item label="图布局类型">
+                                    <el-select v-model="settingsTmp.forceOrientedDiagram.layout"
+                                        placeholder="请选择布局类型" style="width: 200px;">
+                                        <el-option label="力导向图" value="force"></el-option>
+                                        <el-option label="环形布局" value="circular"></el-option>
+                                        <el-option label="绝对布局" value="none"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-tooltip>
                             <el-form-item label="边长度范围">
                                 <el-slider v-model="settingsTmp.forceOrientedDiagram.force.edgeLength" range :min="10"
                                     :max="500" :step="10" style="width: 300px;" />
                             </el-form-item>
                             <el-form-item label="排斥力">
-                                <el-input-number v-model="settingsTmp.forceOrientedDiagram.force.repulsion" :min="0"
-                                    :max="500" />
+                                <el-slider v-model="settingsTmp.forceOrientedDiagram.force.repulsion" :min="0"
+                                    :max="500" :step="1" show-input />
                             </el-form-item>
                             <el-form-item label="引力因子">
-                                <el-input-number v-model="settingsTmp.forceOrientedDiagram.force.gravity" :step="0.005"
-                                    :min="0" :max="1" />
+                                <el-slider v-model="settingsTmp.forceOrientedDiagram.force.gravity" :min="0" :max="0.1"
+                                    :step="0.005" show-input />
                             </el-form-item>
                         </el-form>
                     </el-tab-pane>
 
-                    <!-- 节点属性配置 -->
-                    <el-tab-pane label="节点属性" name="node">
+                    <!-- 结点属性配置 -->
+                    <el-tab-pane label="结点属性" name="node">
                         <el-form :model="settingsTmp.forceOrientedDiagram.nodeShape" label-width="120px">
                             <el-form-item label="显示结点名称">
                                 <el-switch v-model="settingsTmp.forceOrientedDiagram.label.show" />
                             </el-form-item>
                             <el-form-item label="纯色结点形状">
-                                <el-radio-group v-model="settingsTmp.forceOrientedDiagram.nodeShape.solidShape">
-                                    <el-radio label="圆形">圆形</el-radio>
-                                    <el-radio label="矩形">矩形</el-radio>
-                                </el-radio-group>
+                                <el-select v-model="settingsTmp.forceOrientedDiagram.nodeShape.solidShape"
+                                    placeholder="请选择形状" style="width: 200px;">
+                                    <el-option label="圆形" value="circle"></el-option>
+                                    <el-option label="矩形" value="roundRect"></el-option>
+                                </el-select>
                             </el-form-item>
                             <el-form-item label="图片结点形状">
-                                <el-radio-group v-model="settingsTmp.forceOrientedDiagram.nodeShape.imageShape">
-                                    <el-radio label="圆形">圆形</el-radio>
-                                    <el-radio label="矩形">矩形</el-radio>
-                                </el-radio-group>
+                                <el-select v-model="settingsTmp.forceOrientedDiagram.nodeShape.imageShape"
+                                    placeholder="请选择形状" style="width: 200px;">
+                                    <el-option label="圆形" value="circle"></el-option>
+                                    <el-option label="矩形" value="roundRect"></el-option>
+                                </el-select>
                             </el-form-item>
                         </el-form>
                     </el-tab-pane>
@@ -311,12 +324,12 @@
                                     :max="10" />
                             </el-form-item>
                             <el-form-item label="连线曲率">
-                                <el-slider v-model="settingsTmp.forceOrientedDiagram.lineStyle.curveness" :min="0" :max="1"
-                                    :step="0.1" style="width: 300px;" />
+                                <el-slider v-model="settingsTmp.forceOrientedDiagram.lineStyle.curveness" :min="0"
+                                    :max="1" :step="0.1" style="width: 300px;" />
                             </el-form-item>
                             <el-form-item label="连线透明度">
-                                <el-slider v-model="settingsTmp.forceOrientedDiagram.lineStyle.opacity" :min="0" :max="1"
-                                    :step="0.05" style="width: 300px;" />
+                                <el-slider v-model="settingsTmp.forceOrientedDiagram.lineStyle.opacity" :min="0"
+                                    :max="1" :step="0.05" style="width: 300px;" />
                             </el-form-item>
                         </el-form>
                     </el-tab-pane>
@@ -324,7 +337,9 @@
 
                 <!-- 底部按钮 -->
                 <template #footer>
-                    <el-button @click="resetSettings">重置</el-button>
+                    <el-tooltip content="注意: 会重置所有设置" placement="bottom">
+                        <el-button @click="resetSettings">重置</el-button>
+                    </el-tooltip>
                     <el-button type="primary" @click="saveSettings">保存</el-button>
                 </template>
             </el-dialog>
@@ -382,6 +397,79 @@ type Link = {
     source: string;
     target: string;
 };
+
+// class ImageProcessor {
+//     private static instance: ImageProcessor;
+//     private cache: Map<string, string>;
+
+//     private constructor() {
+//         this.cache = new Map();
+//     }
+
+//     public static getInstance(): ImageProcessor {
+//         if (!ImageProcessor.instance) {
+//             ImageProcessor.instance = new ImageProcessor();
+//         }
+//         return ImageProcessor.instance;
+//     }
+
+//     private getImgData(imgSrc: string, radius: number, center: { x: number; y: number } = { x: 0, y: 0 }): Promise<string> {
+//         return new Promise((resolve) => {
+//             if (this.cache.has(imgSrc)) {
+//                 resolve(this.cache.get(imgSrc)!);
+//                 return;
+//             }
+
+//             const canvas = document.createElement('canvas');
+//             const context = canvas.getContext('2d')!;
+//             const img = new Image();
+//             img.crossOrigin = 'anonymous';
+
+//             const diameter = 2 * radius;
+//             img.onload = () => {
+//                 canvas.width = diameter;
+//                 canvas.height = diameter;
+//                 context.clearRect(0, 0, diameter, diameter);
+//                 context.save();
+//                 context.beginPath();
+//                 context.arc(radius, radius, radius, 0, 2 * Math.PI);
+//                 context.clip();
+//                 context.drawImage(
+//                     img,
+//                     center.x - radius,
+//                     center.y - radius,
+//                     diameter,
+//                     diameter,
+//                     0,
+//                     0,
+//                     diameter,
+//                     diameter
+//                 );
+//                 context.restore();
+//                 const dataUrl = canvas.toDataURL('image/png', 1);
+//                 this.cache.set(imgSrc, dataUrl);
+//                 resolve(dataUrl);
+//             };
+
+//             img.src = imgSrc;
+//         });
+//     }
+
+//     public async processNodes(nodes: any, radius: number, center?: { x: number; y: number }): Promise<void> {        
+//         for (const node of nodes) {
+//             if (node.img === "")
+//                 continue;
+
+//             if (!this.cache.has(node.img)) {
+//                 const updatedImg = await this.getImgData(node.img, radius, center);
+//                 node.img = updatedImg;
+//             } else {
+//                 node.img = this.cache.get(node.img)!;
+//             }
+//             console.log(node.img);
+//         }
+//     }
+// }
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
@@ -820,8 +908,8 @@ const defaultSettings = {
         },
     },
     nodeShape: {
-        solidShape: "圆形",
-        imageShape: "圆形",
+        solidShape: "circle",
+        imageShape: "circle",
     },
 };
 
@@ -923,13 +1011,18 @@ let endNodeId: number | null = null;
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
 const createForceNodeData = async () => {
+    // TODO: 切割图片为圆形圆角
+    // TODO: 放弃在前端处理了, 这样性能问题, 而且你改了它的url, 那么在修改结点界面显示的就是被改的url了
+    // TODO: 丢失了原图, 因此暂时搁置吧~
+    // await ImageProcessor.getInstance().processNodes(webkitDep.nodes.getMapList(), 100);
+    
     return Promise.all(webkitDep.nodes.getMapList().map(async (node, idx) => {
         return {
             id: node.id,
             name: node.name,
             category: node.category,
             // 根据是否存在头像选择符号
-            symbol: node.img !== '' ? 'image://' + node.img : 'circle',
+            symbol: node.img !== '' ? 'image://' + node.img : forceOrientedDiagram.nodeShape.solidShape,
             ...(startNodeId && startNodeId === node.id ? { // 被选中
                 symbolSize: [48, 48],
                 itemStyle: {
@@ -975,7 +1068,7 @@ const createStaticNodeDataFromForce = async () => {
             y: nodeCoordinate[idx][1],
             category: node.category,
             // 根据是否存在头像选择符号
-            symbol: node.img !== '' ? 'image://' + node.img : 'circle',
+            symbol: node.img !== '' ? 'image://' + node.img : forceOrientedDiagram.nodeShape.solidShape,
             ...(startNodeId && startNodeId === node.id ? { // 被选中
                 symbolSize: [48, 48],
                 itemStyle: {
@@ -1010,6 +1103,22 @@ const createStaticNodeDataFromForce = async () => {
 };
 
 const setGraphOption = () => {
+    if (forceOrientedDiagram.layout === "none") {
+        // 变为静态图
+        createStaticNodeDataFromForce().then(nodeData => {
+            const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
+            myChart.value?.setOption({
+                series: [{
+                    type: 'graph',
+                    layout: 'none', // 转换为静态布局
+                    data: nodeData, // 使用固定位置的节点
+                    edges: webkitDep.links.getMapList(),
+                }]
+            });
+        });
+        return;
+    }
+
     // 获取节点数据
     createForceNodeData().then((nodeData) => {
         // 图表配置
@@ -1087,10 +1196,10 @@ const setGraphOption = () => {
                 },
             ],
         };
-    
+
         myChart.value?.hideLoading(); // 隐藏加载动画
         myChart.value?.setOption(option); // 设置图表选项
-    }); 
+    });
 };
 
 /**
@@ -1099,6 +1208,10 @@ const setGraphOption = () => {
 const getAllChartData = async () => {
     myChart.value?.showLoading(); // 显示加载动画
 
+    if (forceOrientedDiagram.layout === "none") {
+        forceOrientedDiagram.layout = "force";
+    }
+
     // 网络加载
     initCategory(setGraphOption);
 };
@@ -1106,7 +1219,6 @@ const getAllChartData = async () => {
 // 在组件挂载后初始化图表
 onMounted(async () => {
     if (chart.value) {
-        console.log(forceOrientedDiagram)
         // https://juejin.cn/post/7130211001235931167 解决legend残留问题
         myChart.value = markRaw(echarts.init(chart.value)) // 初始化图表
 
@@ -1342,11 +1454,6 @@ const resetPosition = () => {
             }]
         });
     }
-};
-
-// 打开设置的逻辑
-const openSettings = () => {
-    console.log("打开设置");
 };
 
 // === Begin === 添加结点界面逻辑 === Begin ===
