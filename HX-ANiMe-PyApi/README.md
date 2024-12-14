@@ -2,7 +2,7 @@
 
 ## 一、介绍
 
-本PyApi包只是为了方便添加结点和边, 因为手动导入实在是太慢了; 计佬(计算机老哥)肯定懒得手动搞...
+本PyApi包只是为了方便添加结点和边, 因为手动导入实在是太慢了; 计佬 ~~(计算机老哥)~~ 肯定懒得手动搞...
 
 于是编写了本包, 并且Java后端提供有对应的api接口, 仅仅只需要一个`apiKey`即可使用!
 
@@ -16,6 +16,8 @@
 # 导入 HX-ANiMe-PyApi 包 (当然, 您也可以按需导入)
 from HXANiMeApi import *
 ```
+
+---
 
 ### 2.2 数据类型说明
 
@@ -56,6 +58,8 @@ class Edge:
         self.fromNodeId = fromNodeId # 源节点id
         self.toNodeId = toNodeId     # 目标节点id
 ```
+
+---
 
 ### 2.3 接口说明
 
@@ -104,6 +108,8 @@ nodeId: int = api.addNode(Node(...))
 # 添加边
 edgeIdL int = api.addEdge(Edge(...))
 ```
+
+---
 
 ### 2.4 idMap工具类
 

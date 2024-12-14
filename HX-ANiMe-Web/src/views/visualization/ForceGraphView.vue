@@ -93,7 +93,7 @@
                             style="margin-bottom: 10px;" />
                     </el-tooltip>
                     <el-tooltip content="设置" placement="top">
-                        <el-button circle title="设置" size="large" :icon="Setting" @click="openSettings"
+                        <el-button circle title="设置" size="large" :icon="Setting" @click="showDialog = true"
                             style="margin-bottom: 10px;" />
                     </el-tooltip>
                 </div>
@@ -253,12 +253,81 @@
                         <span v-if="graphList.length === 0">新建</span>图表</span>
                 </h1>
             </div>
+
+            <!-- 设置弹窗 -->
+            <el-dialog v-model="showDialog" title="力导向图设置" :draggable="true" width="550px" :close-on-click-modal="false">
+                <!-- 切换栏 -->
+                <el-tabs v-model="activeTab">
+                    <!-- 图属性配置 -->
+                    <el-tab-pane label="图属性" name="graph">
+                        <el-form :model="settings.ForceOrientedDiagram.force" label-width="120px">
+                            <el-form-item label="边长度范围">
+                                <el-slider v-model="settings.ForceOrientedDiagram.force.edgeLength" range :min="10"
+                                    :max="300" :step="10" />
+                            </el-form-item>
+                            <el-form-item label="排斥力">
+                                <el-input-number v-model="settings.ForceOrientedDiagram.force.repulsion" :min="0"
+                                    :max="500" />
+                            </el-form-item>
+                            <el-form-item label="引力因子">
+                                <el-input-number v-model="settings.ForceOrientedDiagram.force.gravity" :step="0.005"
+                                    :min="0" :max="0.1" />
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+
+                    <!-- 节点属性配置 -->
+                    <el-tab-pane label="节点属性" name="node">
+                        <el-form :model="settings.ForceOrientedDiagram.nodeShape" label-width="120px">
+                            <el-form-item label="纯色结点形状">
+                                <el-radio-group v-model="settings.ForceOrientedDiagram.nodeShape.solidShape">
+                                    <el-radio label="圆形">圆形</el-radio>
+                                    <el-radio label="矩形">矩形</el-radio>
+                                </el-radio-group>
+                            </el-form-item>
+                            <el-form-item label="图片结点形状">
+                                <el-radio-group v-model="settings.ForceOrientedDiagram.nodeShape.imageShape">
+                                    <el-radio label="圆形">圆形</el-radio>
+                                    <el-radio label="矩形">矩形</el-radio>
+                                </el-radio-group>
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+
+                    <!-- 边属性配置 -->
+                    <el-tab-pane label="边属性" name="edge">
+                        <el-form :model="settings.ForceOrientedDiagram.lineStyle" label-width="120px">
+                            <el-form-item label="连线颜色">
+                                <el-color-picker v-model="settings.ForceOrientedDiagram.lineStyle.color" />
+                            </el-form-item>
+                            <el-form-item label="连线宽度">
+                                <el-input-number v-model="settings.ForceOrientedDiagram.lineStyle.width" :min="1"
+                                    :max="10" />
+                            </el-form-item>
+                            <el-form-item label="连线曲率">
+                                <el-slider v-model="settings.ForceOrientedDiagram.lineStyle.curveness" :min="0" :max="1"
+                                    :step="0.1" />
+                            </el-form-item>
+                            <el-form-item label="连线透明度">
+                                <el-slider v-model="settings.ForceOrientedDiagram.lineStyle.opacity" :min="0" :max="1"
+                                    :step="0.05" />
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+                </el-tabs>
+
+                <!-- 底部按钮 -->
+                <template #footer>
+                    <el-button @click="resetSettings">重置</el-button>
+                    <el-button type="primary" @click="saveSettings">保存</el-button>
+                </template>
+            </el-dialog>
         </el-main>
     </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, markRaw, h } from 'vue';
+import { ref, onMounted, onBeforeUnmount, markRaw, h, reactive } from 'vue';
 import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
 import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
@@ -713,6 +782,52 @@ const handleDelChart = (id: number) => {
 
 // === End === 左侧边栏数据 === End ===
 
+// === Begin === 界面设置 === Begin ===
+const showDialog = ref(false);
+const activeTab = ref("graph"); // 默认选中图属性
+
+let forceOrientedDiagram = settingStore.getForceOrientedDiagram;
+
+const defaultSettings = {
+    force: {
+        edgeLength: [50, 200],
+        repulsion: 100,
+        gravity: 0.025,
+    },
+    lineStyle: {
+        color: "#990099",
+        width: 2,
+        curveness: 0,
+        opacity: 0.75,
+    },
+    label: {
+        show: false,
+    },
+    emphasis: {
+        label: {
+            show: true,
+        },
+    },
+    nodeShape: {
+        solidShape: "圆形",
+        imageShape: "圆形",
+    },
+};
+
+const settings = reactive({
+    ForceOrientedDiagram: JSON.parse(JSON.stringify(forceOrientedDiagram))
+});
+
+const resetSettings = () => {
+    Object.assign(settings.ForceOrientedDiagram, JSON.parse(JSON.stringify(defaultSettings)));
+};
+
+const saveSettings = () => {
+    forceOrientedDiagram = settings.ForceOrientedDiagram;
+    localStorage.setItem("forceOrientedDiagram", JSON.stringify(forceOrientedDiagram));
+    showDialog.value = false;
+};
+// === End === 界面设置 === End ===
 
 // === Begin === 网络加载数据 (init) === Begin ===
 
@@ -949,12 +1064,13 @@ const getAllChartData = async () => {
                     // 连线样式
                     edgeLabel: {
                         normal: {
-                            show: true,
+                            // 是否显示连线文本
+                            show: false,
                             textStyle: {
                                 color: layoutThemeColor,
                                 fontSize: 14,
                             },
-                            formatter: function (param: any) { // 标签内容
+                            formatter: (param: any) => { // 标签内容
                                 return webkitDep.nodes.getItemById(param.data.target)?.category;
                             }
                         }
@@ -1227,7 +1343,7 @@ const fetchApiKey = () => {
     api.getApiKey(nowGraphId.value, (key: string) => {
         apiKey.value = key;
     }, () => {
-        
+
     })
 };
 
