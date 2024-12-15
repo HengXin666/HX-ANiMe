@@ -66,10 +66,10 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useElementPlusTheme } from 'use-element-plus-theme';
 import { useDark, useToggle } from '@vueuse/core';
-import { useSettingStore } from '@/stores/useSettingsStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import 'element-plus/theme-chalk/dark/css-vars.css' // 暗黑模式 css
 
-const settingStore = useSettingStore();
+const settingStore = useSettingsStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
 const { changeTheme } = useElementPlusTheme(layoutThemeColor);  // 初始化主题色
 

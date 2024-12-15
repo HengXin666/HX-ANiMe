@@ -137,16 +137,16 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
         animeList = getANiMeDataByCharactersSubjectHtml(html)
 
         # 添加结点: 番剧信息结点; 并且获得结点id
-        titleNodeId = api.addNode(Node(legendId=legendMap["番剧"].legendId, name=title, imgUrl=titleImgUrl))
+        titleNodeId = api.addNode(Node(legendId=legendMap["番剧"].legendId, name=title, imgUrl=f"https:{titleImgUrl}"))
 
         for it in animeList:
             # 添加CV结点: 这样写, 主要是考虑了一个声优可能配了多个番的角色, 需要复用之前存在的结点
             try:
                 cvNodeId = nodeMap.findByName(it.cvName).nodeId
             except:
-                cvNodeId = nodeMap.ensure(api, Node(legendId=legendMap["声优"].legendId, name=it.cvName, imgUrl=it.cvImgSrc))
+                cvNodeId = nodeMap.ensure(api, Node(legendId=legendMap["声优"].legendId, name=it.cvName, imgUrl=f"https:{it.cvImgSrc}"))
             # 添加角色结点
-            roleNodeId = nodeMap.ensure(api, Node(legendId=legendMap["角色"].legendId, name=f"{it.cnName} ({it.jpName})", imgUrl=it.roleImgSrc))
+            roleNodeId = nodeMap.ensure(api, Node(legendId=legendMap["角色"].legendId, name=f"{it.cnName} ({it.jpName})", imgUrl=f"https:{it.roleImgSrc}"))
             # 添加边: 角色 -> 番剧
             api.addEdge(Edge(fromNodeId=roleNodeId, toNodeId=titleNodeId))
             # 添加边: 声优 -> 角色
@@ -155,7 +155,7 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
 
 if __name__ == '__main__':
     # 用户图表 apiKey
-    apiKey = "zS8J9vBLPsWlro2ppsI6ayZkBOGxbp434BpmG"
+    apiKey = "JYVJGUydg1bgOSgF0lDXWFHI4Upp2NI7fbj4ji"
 
     # 后端服务器URL
     ANiMeUrl = "http://localhost:28205"

@@ -264,8 +264,8 @@
                         <el-form :model="settingsTmp.forceOrientedDiagram.force" label-width="120px">
                             <el-tooltip content="不建议修改, 有Bug" placement="top">
                                 <el-form-item label="图布局类型">
-                                    <el-select v-model="settingsTmp.forceOrientedDiagram.layout"
-                                        placeholder="请选择布局类型" style="width: 200px;">
+                                    <el-select v-model="settingsTmp.forceOrientedDiagram.layout" placeholder="请选择布局类型"
+                                        style="width: 200px;">
                                         <el-option label="力导向图" value="force"></el-option>
                                         <el-option label="环形布局" value="circular"></el-option>
                                         <el-option label="绝对布局" value="none"></el-option>
@@ -352,7 +352,7 @@ import { ref, onMounted, onBeforeUnmount, markRaw, h, reactive } from 'vue';
 import { cloneDeep } from 'lodash';
 import * as echarts from 'echarts';
 import { ElButton, ElMessage, ElMessageBox, UploadRawFile, UploadUserFile } from 'element-plus';
-import { useSettingStore } from '@/stores/useSettingsStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 import { SyncArrayMap } from '@/types/syncArrayMap';
 import * as api from '@/apis/forceGraph';
 import {
@@ -366,7 +366,7 @@ import {
     Delete
 } from '@element-plus/icons-vue';
 
-const settingStore = useSettingStore();
+const settingStore = useSettingsStore();
 const layoutThemeColor = settingStore.theme.color;  // 默认主题色
 
 // 引用图表元素
@@ -398,78 +398,84 @@ type Link = {
     target: string;
 };
 
-// class ImageProcessor {
-//     private static instance: ImageProcessor;
-//     private cache: Map<string, string>;
+/**
+ * 裁剪图片为圆形，并返回本地缓存的 URL
+ * @param imageUrl 图片的原始 URL
+ * @returns Promise<string> 返回一个经过裁剪的图片本地 URL
+ */
+const cropImageToCircle = async (imageUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous"; // 允许跨域加载图片
+        img.onload = () => {
+            const size = Math.min(img.width, img.height); // 确定裁剪尺寸
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
 
-//     private constructor() {
-//         this.cache = new Map();
-//     }
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                reject("Canvas context not available");
+                return;
+            }
 
-//     public static getInstance(): ImageProcessor {
-//         if (!ImageProcessor.instance) {
-//             ImageProcessor.instance = new ImageProcessor();
-//         }
-//         return ImageProcessor.instance;
-//     }
+            // 裁剪为圆形
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
 
-//     private getImgData(imgSrc: string, radius: number, center: { x: number; y: number } = { x: 0, y: 0 }): Promise<string> {
-//         return new Promise((resolve) => {
-//             if (this.cache.has(imgSrc)) {
-//                 resolve(this.cache.get(imgSrc)!);
-//                 return;
-//             }
+            // 绘制图片到 canvas
+            const xOffset = (img.width - size) / 2;
+            const yOffset = (img.height - size) / 2;
+            ctx.drawImage(img, xOffset, yOffset, size, size, 0, 0, size, size);
 
-//             const canvas = document.createElement('canvas');
-//             const context = canvas.getContext('2d')!;
-//             const img = new Image();
-//             img.crossOrigin = 'anonymous';
+            // 将裁剪后的图片转换为 Blob
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob); // 生成本地 URL
+                    resolve(url);
+                } else {
+                    reject("Failed to convert canvas to Blob");
+                }
+            });
+        };
 
-//             const diameter = 2 * radius;
-//             img.onload = () => {
-//                 canvas.width = diameter;
-//                 canvas.height = diameter;
-//                 context.clearRect(0, 0, diameter, diameter);
-//                 context.save();
-//                 context.beginPath();
-//                 context.arc(radius, radius, radius, 0, 2 * Math.PI);
-//                 context.clip();
-//                 context.drawImage(
-//                     img,
-//                     center.x - radius,
-//                     center.y - radius,
-//                     diameter,
-//                     diameter,
-//                     0,
-//                     0,
-//                     diameter,
-//                     diameter
-//                 );
-//                 context.restore();
-//                 const dataUrl = canvas.toDataURL('image/png', 1);
-//                 this.cache.set(imgSrc, dataUrl);
-//                 resolve(dataUrl);
-//             };
+        img.onerror = (e) => reject(`Failed to load image: ${e}`);
+        img.src = imageUrl;
+    });
+};
 
-//             img.src = imgSrc;
-//         });
-//     }
+const urlCache = new Map<string, string>();
 
-//     public async processNodes(nodes: any, radius: number, center?: { x: number; y: number }): Promise<void> {        
-//         for (const node of nodes) {
-//             if (node.img === "")
-//                 continue;
+/**
+ * 从缓存中查找裁剪的图片是否存在, 不存在则裁剪并且添加
+ * @param imageUrl 
+ */
+const cropImageToCircleWithCache = async (imageUrl: string): Promise<string> => {
+    if (urlCache.has(imageUrl)) {
+        return urlCache.get(imageUrl)!;
+    }
+    try {
+        const croppedUrl = await cropImageToCircle(imageUrl);
+        urlCache.set(imageUrl, croppedUrl);
+        return croppedUrl;
+    } catch {
+        urlCache.set(imageUrl, imageUrl);
+    }
+    return imageUrl;
+};
 
-//             if (!this.cache.has(node.img)) {
-//                 const updatedImg = await this.getImgData(node.img, radius, center);
-//                 node.img = updatedImg;
-//             } else {
-//                 node.img = this.cache.get(node.img)!;
-//             }
-//             console.log(node.img);
-//         }
-//     }
-// }
+/**
+ * 根据配置, 选择是否裁剪图片, 返回处理的url
+ * @param imageUrl 
+ */
+const getImgBySetting = async (imageUrl: string) => {
+    if (forceOrientedDiagram.nodeShape.imageShape === "circle") {
+        return await cropImageToCircleWithCache(imageUrl);
+    }
+    return imageUrl;
+};
 
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
@@ -914,7 +920,7 @@ const defaultSettings = {
     },
     nodeShape: {
         solidShape: "circle",
-        imageShape: "circle",
+        imageShape: "roundRect",
     },
 };
 
@@ -1016,18 +1022,13 @@ let endNodeId: number | null = null;
 // https://echarts.apache.org/zh/option.html#series-graph.type
 // https://www.hangge.com/blog/cache/detail_3130.html
 const createForceNodeData = async () => {
-    // TODO: 切割图片为圆形圆角
-    // TODO: 放弃在前端处理了, 这样性能问题, 而且你改了它的url, 那么在修改结点界面显示的就是被改的url了
-    // TODO: 丢失了原图, 因此暂时搁置吧~
-    // await ImageProcessor.getInstance().processNodes(webkitDep.nodes.getMapList(), 100);
-    
     return Promise.all(webkitDep.nodes.getMapList().map(async (node, idx) => {
         return {
             id: node.id,
             name: node.name,
             category: node.category,
             // 根据是否存在头像选择符号
-            symbol: node.img !== '' ? 'image://' + node.img : forceOrientedDiagram.nodeShape.solidShape,
+            symbol: node.img !== '' ? 'image://' + await getImgBySetting(node.img) : forceOrientedDiagram.nodeShape.solidShape,
             ...(startNodeId && startNodeId === node.id ? { // 被选中
                 symbolSize: [48, 48],
                 itemStyle: {
@@ -1073,7 +1074,7 @@ const createStaticNodeDataFromForce = async () => {
             y: nodeCoordinate[idx][1],
             category: node.category,
             // 根据是否存在头像选择符号
-            symbol: node.img !== '' ? 'image://' + node.img : forceOrientedDiagram.nodeShape.solidShape,
+            symbol: node.img !== '' ? 'image://' + await getImgBySetting(node.img) : forceOrientedDiagram.nodeShape.solidShape,
             ...(startNodeId && startNodeId === node.id ? { // 被选中
                 symbolSize: [48, 48],
                 itemStyle: {
@@ -1111,7 +1112,7 @@ const setGraphOption = () => {
     if (forceOrientedDiagram.layout === "none") {
         // 变为静态图
         createStaticNodeDataFromForce().then(nodeData => {
-            const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
+            // const zoomLevel: number = myChart.value?.getOption().series[0].zoom;
             myChart.value?.setOption({
                 series: [{
                     type: 'graph',
@@ -1556,21 +1557,6 @@ const closeAddNodeDialog = () => {
     addNodeDialogVisible.value = false;
 };
 
-/* // 测试添加结点
-const _addNodeTest = () => {
-    const node: Node = {
-        id: webkitDep.nodes.getMapList().length + 1,
-        name: nodeForm.value.name,
-        categoryId: (_ => _ ? _ : -1)(webkitDep.categories.getMapList().find(it => it.name === nodeForm.value.category)?.id),
-        category: nodeForm.value.category,
-        img: nodeForm.value.imageUrl,
-        describe: nodeForm.value.describe
-    };
-    ElMessage.info("添加结点id:" + node.id);
-    addNodeToChart(node);
-}; 
-*/
-
 // 上传图片到后端, 获取到url
 const uploadImgFromNet = (cb: Function) => {
     api.uploadImg(nowGraphId.value, cachedFile.value, (url: any) => {
@@ -1625,7 +1611,7 @@ const updateNodeFromNet = (categoryId: number) => {
         name: nodeForm.value.name,
         categoryId: categoryId,
         category: nodeForm.value.category,
-        img: nodeForm.value.imageUrl,
+        img: ((x) => x ? x : '')(imageUrl.value) + '',
         describe: nodeForm.value.describe
     };
 

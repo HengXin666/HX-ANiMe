@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 
+const getFromLocalStorage = (key: string, defaultValue: any) => {
+    const storedValue = localStorage.getItem(key);
+    return storedValue ? JSON.parse(storedValue) : defaultValue;
+};
+
 // 用户设置
-export const useSettingStore = defineStore("setting", {
+export const useSettingsStore = defineStore("setting", {
     state: () => ({
         // 主题
         theme: {
@@ -35,12 +40,12 @@ export const useSettingStore = defineStore("setting", {
             },
             nodeShape: {
                 solidShape: "circle",
-                imageShape: "circle",
+                imageShape: "roundRect",
             },
         },
     }),
     getters: {
-        getTheme: (state) => JSON.parse(((s) => {return s ? s : ""; })(localStorage.getItem("theme"))) || state.theme,
-        getForceOrientedDiagram: (state) => JSON.parse(((s) => {return s ? s : ""; })(localStorage.getItem("forceOrientedDiagram"))) || state.forceOrientedDiagram,
+        getTheme: (state) => getFromLocalStorage("theme", state.theme),
+        getForceOrientedDiagram: (state) => getFromLocalStorage("forceOrientedDiagram", state.forceOrientedDiagram),
     }
 });
