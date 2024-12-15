@@ -151,6 +151,8 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
             api.addEdge(Edge(fromNodeId=roleNodeId, toNodeId=titleNodeId))
             # 添加边: 声优 -> 角色
             api.addEdge(Edge(fromNodeId=cvNodeId, toNodeId=roleNodeId))
+        
+        print(f"已爬取: {title}")
 
 
 if __name__ == '__main__':
@@ -160,5 +162,21 @@ if __name__ == '__main__':
     # 后端服务器URL
     ANiMeUrl = "http://localhost:28205"
 
-    # [88287, 425998, 385209]
+    """ 番剧
+    [
+        88287,  # Re:ゼロから始める異世界生活 3rd season 襲擊編
+        425998, # この素晴らしい世界に爆焔を！
+        385209, # ご注文はうさぎですか？
+        79227,  # ノーゲーム・ノーライフ (游戏人生)
+        194261, # 天使的3P
+        219658, # 龙王的工作
+        84873,  # 漆黑的子弹
+        262939, # 科方
+        302128, # 约战 4
+        407573, # 转生史莱姆 3
+        419846, # 陰の実力者になりたくて！ 2nd season
+        295017, # 棍勇
+        289907, # 盾勇 3
+    ]
+    """
     main(ANiMeUrl, apiKey, [])
