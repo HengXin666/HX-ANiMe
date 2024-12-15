@@ -497,7 +497,7 @@ const _linksData: Link[] = [];
 ];
 
 // 当前图的id
-const nowGraphId = ref(-1);
+const nowGraphId = ref(+(localStorage.getItem("nowGraphId") || -1));
 
 // 创建 SyncArrayMap 实例
 const webkitDep = {
@@ -541,10 +541,12 @@ const loadCharts = async () => {
             for (const it of data) {
                 graphList.value.push(it);
             }
-            if (graphList.value.length > 0) {
-                nowGraphId.value = graphList.value[0].id;
-            } else {
-                nowGraphId.value = -2; // 要求用户新建图表
+            if (nowGraphId.value === -1) {
+                if (graphList.value.length > 0) {
+                    nowGraphId.value = graphList.value[0].id;
+                } else {
+                    nowGraphId.value = -2; // 要求用户新建图表
+                }
             }
             resolve(data);
         }, () => {
@@ -700,6 +702,7 @@ const addGraph = () => {
                     ElMessage.success("新建图表成功!");
                     if (nowGraphId.value === -2) {
                         nowGraphId.value = id;
+                        localStorage.setItem("nowGraphId", "" + nowGraphId.value);
                         getAllChartData();
                     }
                 }, () => {
@@ -720,6 +723,7 @@ const handleLoadChart = (id: number) => {
         apiKey.value = "";
     }
     nowGraphId.value = id;
+    localStorage.setItem("nowGraphId", "" + nowGraphId.value);
     getAllChartData();
 };
 
@@ -864,6 +868,7 @@ const handleDelChart = (id: number) => {
                     ElMessage.success("删除成功!");
                     if (contextMenuId.value === nowGraphId.value) {
                         nowGraphId.value = -2;
+                        localStorage.setItem("nowGraphId", "" + nowGraphId.value);
                         getAllChartData();
                     }
                 }, () => {

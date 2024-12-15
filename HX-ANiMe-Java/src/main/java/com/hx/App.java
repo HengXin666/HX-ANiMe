@@ -10,8 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Slf4j
 @SpringBootApplication
 public class App {
-    @Autowired
-    private static JdbcTemplate jdbcTemplate;
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
         log.info("key: {}", JWTUtils.SECRET_KEY);
