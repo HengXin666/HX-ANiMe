@@ -24,7 +24,7 @@
 - [getANiMeCVData.py](./HX-ANiMe-PyApi/getANiMeCVData.py) (爬取番剧信息, 使用`HXPyApi`发送处理后的信息到后端)
 
 
-## 项目结构说明
+## 🛠 项目结构说明
 > `HX-ANiMe`  
 >
 > > `.gitignore` -- 忽略提交配置
@@ -44,7 +44,7 @@
 
 - 请求链路:
 
-$$
+<!-- $$
 \text{前端} 
 \xrightleftharpoons[\text{封装成(Json)VO}]{\text{DTO/query}} 
 \underbrace{
@@ -56,7 +56,9 @@ $$
 \xrightleftharpoons[\text{返回}]{\text{请求}}
 \text{MySql}
 }_{\text{Java SpringBoot后端}}
-$$
+$$ -->
+
+![](./documents/img/请求链路说明.png)
 
 - 数据库设计 (ER图):
 
@@ -136,16 +138,6 @@ https://github.com/alibaba/spring-cloud-alibaba/wiki/%E7%89%88%E6%9C%AC%E8%AF%B4
 - `ui`：https://github.com/ElemeFE
 
 同时也感谢其他没有明确写出来的开源组件提供给与维护者。
-
-## 🛠 项目结构
-
-```
-HX-ANiMe
-├── frontend/          # Vue3 前端代码
-├── backend/           # Spring Boot 后端代码
-├── api_package/       # Python API 包
-└── examples/          # 使用示例
-```
 
 ## 🧐 未来展望
 
