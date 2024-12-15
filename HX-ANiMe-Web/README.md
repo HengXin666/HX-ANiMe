@@ -1,8 +1,8 @@
-# vue-login
+<h1 align="center">HX-ANiMe-Web</h1> 
 
-This template should help get you started developing with Vue 3 in Vite.
+使用`vue3`+`echarts`+`element-plus`的力导向图界面
 
-## Recommended IDE Setup
+## 推荐的IDE设置
 
 [`VSCode`](https://code.visualstudio.com/) + [`Volar`](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (需要禁用`Vetur`) + [`TypeScript Vue Plugin (Volar)`](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin)。
 
