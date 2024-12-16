@@ -1501,7 +1501,6 @@ const nodeForm = ref({
     category: "",
     // 图片Url
     image: "",       // 本地图片预览
-    imageUrl: "",    // 网络图片地址
     // 描述
     describe: "",    // 描述
 });
@@ -1549,18 +1548,19 @@ const openAddNodeDialog = () => {
 
 // 重置表单
 const resetAddNodeForm = () => {
-    nodeForm.value = { name: "", category: "", image: "", imageUrl: "", describe: "" };
+    nodeForm.value = { name: "", category: "", image: "", describe: "" };
 };
 
 // 关闭弹窗
 const closeAddNodeDialog = () => {
     addNodeDialogVisible.value = false;
+    imageUrl.value = null;
 };
 
 // 上传图片到后端, 获取到url
 const uploadImgFromNet = (cb: Function) => {
     api.uploadImg(nowGraphId.value, cachedFile.value, (url: any) => {
-        nodeForm.value.imageUrl = cloneDeep(url);
+        inputUrl.value = cloneDeep(url);
         cachedFile.value = null;
         cb();
     }, () => {
@@ -1576,9 +1576,14 @@ const addNodeFromNet = async (categoryId: number) => {
             name: nodeForm.value.name,
             categoryId: categoryId,
             category: nodeForm.value.category,
-            img: nodeForm.value.imageUrl,
+            img: ((x) => x ? x : '')(inputUrl.value) + '',
             describe: nodeForm.value.describe
         };
+
+        console.log("失败!");
+        
+        console.log(node);
+        
 
         // 添加结点
         api.addNode(nowGraphId.value, {
@@ -1611,7 +1616,7 @@ const updateNodeFromNet = (categoryId: number) => {
         name: nodeForm.value.name,
         categoryId: categoryId,
         category: nodeForm.value.category,
-        img: ((x) => x ? x : '')(imageUrl.value) + '',
+        img: ((x) => x ? x : '')(inputUrl.value) + '',
         describe: nodeForm.value.describe
     };
 
@@ -1733,15 +1738,16 @@ const confirmAddNode = () => {
 
     function fun () {
         // 处理图例 & 添加结点
-        addCategoryAndNode(nodeForm.value.category, legendColor.value).then(() => {
-            // 关闭窗口
-            closeAddNodeDialog();
-            resetAddNodeForm();
-        });
+        addCategoryAndNode(nodeForm.value.category, legendColor.value);
+        ElMessage.success("关闭窗口");
+        // 关闭窗口
+        closeAddNodeDialog();
+        resetAddNodeForm();
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
-    if (cachedFile.value && nodeForm.value.imageUrl === "") {
+    if (cachedFile.value && inputUrl.value === "") {
+        ElMessage.success("有图片")
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
     } else {
@@ -1843,7 +1849,6 @@ const openNodeUpDataDialog = (nodeId: number) => {
     refreshCategoriesNameList();
     nodeUpDataDialogVisible.value = true;
     // 切换
-    tmpNodeForm.value = cloneDeep(nodeForm.value);
     tmpLegendColor.value = cloneDeep(legendColor.value);
     tmpInputUrl.value = cloneDeep(inputUrl.value);
     tmpImageUrl.value = cloneDeep(imageUrl.value);
@@ -1875,6 +1880,7 @@ const openNodeUpDataDialog = (nodeId: number) => {
 // 关闭弹窗
 const closeNodeUpDataDialog = () => {
     nodeUpDataDialogVisible.value = false;
+    imageUrl.value = null;
     // 切换
     nodeForm.value = cloneDeep(tmpNodeForm.value);
     legendColor.value = cloneDeep(tmpLegendColor.value);
@@ -1891,7 +1897,7 @@ const confirmUpDataNode = () => {
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
-    if (cachedFile.value && nodeForm.value.imageUrl === "") {
+    if (cachedFile.value && inputUrl.value === "") {
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
     } else {
