@@ -480,27 +480,11 @@ const getImgBySetting = async (imageUrl: string) => {
 // 图表数据
 // 数据加载, 分片加载, 自定义http协议, 如果为ing则继续请求(此时带上最大的结点id/边id), 直达为end, 则关闭请求.
 const _categoriesData: Category[] = [];
-[
-    { id: 1, name: 'CV', color: '#990099' },
-    { id: 2, name: 'Anime', color: '#334455' },
-    { id: 3, name: 'Character', color: '#D6B782' },
-];
 
 // TODO: 需要先加载 categoriesData, 然后再加载 nodesData
 const _nodesData: Node[] = [];
-[
-    { id: 1, name: 'CV 1', categoryId: 1, category: 'CV', img: 'src/views/img/logo/logo.png', describe: '这个是CV' },
-    { id: 2, name: 'Anime 1', categoryId: 2, category: 'Anime', img: '', describe: '这个是アニメ' },
-    { id: 3, name: 'Character 1', categoryId: 3, category: 'Character', img: '', describe: '这个是角色1' },
-    { id: 4, name: 'Character 2', categoryId: 3, category: 'Character', img: '', describe: '这个是角色2' },
-];
 
 const _linksData: Link[] = [];
-[
-    { id: 1, source: '1', target: '2' },
-    { id: 2, source: '2', target: '3' },
-    { id: 3, source: '3', target: '4' },
-];
 
 // 当前图的id
 const nowGraphId = ref(+(localStorage.getItem("nowGraphId") || -1));
@@ -1420,6 +1404,8 @@ onMounted(async () => {
                 },
             });
         });
+    } else {
+        ElMessage.error("界面初始化异常! 请刷新界面!");
     }
 });
 
@@ -1581,11 +1567,6 @@ const addNodeFromNet = async (categoryId: number) => {
             describe: nodeForm.value.describe
         };
 
-        console.log("失败!");
-        
-        console.log(node);
-        
-
         // 添加结点
         api.addNode(nowGraphId.value, {
             nodeId: 0,
@@ -1597,6 +1578,9 @@ const addNodeFromNet = async (categoryId: number) => {
             node.id = id;
             ElMessage.success("添加结点id:" + node.id);
             addNodeToChart(node);
+            // 关闭窗口
+            closeAddNodeDialog();
+            resetAddNodeForm();
             resolve(id);
         }, () => {
             reject();
@@ -1681,7 +1665,7 @@ const addCategoryAndNode = async (categoryName: string, categoryColor: string) =
                 addNodeFromNet(id);
                 resolve(id);
             }, () => {
-                reject();
+                reject(-1);
             });
         }
     });
@@ -1740,10 +1724,6 @@ const confirmAddNode = () => {
     function fun () {
         // 处理图例 & 添加结点
         addCategoryAndNode(nodeForm.value.category, legendColor.value);
-        ElMessage.success("关闭窗口");
-        // 关闭窗口
-        closeAddNodeDialog();
-        resetAddNodeForm();
     };
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
