@@ -547,7 +547,7 @@ const loadCharts = async () => {
             for (const it of data) {
                 graphList.value.push(it);
             }
-            if (nowGraphId.value === -1) {
+            if (nowGraphId.value === -1 || !graphList.value.find(it => it.id === nowGraphId.value)) {
                 if (graphList.value.length > 0) {
                     nowGraphId.value = graphList.value[0].id;
                 } else {
@@ -1108,6 +1108,7 @@ const createStaticNodeDataFromForce = async () => {
     }));
 };
 
+// 设置图配置属性
 const setGraphOption = () => {
     if (forceOrientedDiagram.layout === "none") {
         // 变为静态图
@@ -1594,7 +1595,7 @@ const addNodeFromNet = async (categoryId: number) => {
             description: node.describe
         }, (id: number) => {
             node.id = id;
-            ElMessage.info("添加结点id:" + node.id);
+            ElMessage.success("添加结点id:" + node.id);
             addNodeToChart(node);
             resolve(id);
         }, () => {
@@ -1628,7 +1629,7 @@ const updateNodeFromNet = (categoryId: number) => {
         imgUrl: node.img,
         description: node.describe
     }, () => {
-        ElMessage.info("修改结点id:" + node.id);
+        ElMessage.success("修改结点id:" + node.id);
 
         const it = webkitDep.nodes.getItemById(node.id);
         if (it) {
@@ -1747,7 +1748,6 @@ const confirmAddNode = () => {
 
     // 处理图片: 更新到 nodeForm.value.imageUrl
     if (cachedFile.value && inputUrl.value === "") {
-        ElMessage.success("有图片")
         // 上传图片, 并且更新到 imageUrl, 然后删除 cachedFile 的值
         uploadImgFromNet(fun);
     } else {
@@ -1995,7 +1995,6 @@ const removeNodeLogic = () => {
             }
         },
     });
-    // .then((action: any) => {});
 };
 
 // === End === 修改结点逻辑 === End ===
