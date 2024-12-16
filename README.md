@@ -15,16 +15,17 @@ $HX-ANiMe$ 是一个支持**私有部署**的`力导向图`可视化程序, 您�
 该项目提供了一站式服务, 覆盖前后端完整实现, 包含以下核心技术栈: 
 - **前端**: `Vue3` + `ECharts` + `Element-Plus`
 - **后端**: `Java` + `Spring Boot`
-- **支持 API Key**: 用户可通过获取的`API Key`自行编写代码, 自动化的完成添加结点、添加边等操作
-- **Python API 包**: 封装了一个[包](./HX-ANiMe-PyApi/HXANiMeApi/), 里面提供了对这个`API Key`所指向的图的结点、边的增加和查看.
 
-## 📖 Python API  
+## 📖 Python API
+
+用户可通过获取的`API Key`自行编写代码, 自动化的完成添加结点、添加边等操作.
+
+为此我们封装了一个[包](./HX-ANiMe-PyApi/HXANiMeApi/), 里面提供了向后端直接通过`API Key`对指向的图的结点、边的增加和查看的Api方法.
 
 文档: [HX-ANiMe-PyApi](./HX-ANiMe-PyApi/README.md)
 
 代码实例:
 - [getANiMeCVData.py](./HX-ANiMe-PyApi/getANiMeCVData.py) (爬取番剧信息, 使用`HXPyApi`发送处理后的信息到后端)
-
 
 ## 🛠 项目结构说明
 > `HX-ANiMe`  
@@ -44,7 +45,7 @@ $HX-ANiMe$ 是一个支持**私有部署**的`力导向图`可视化程序, 您�
 ## 软件架构
 ### 总体架构
 
-- 请求链路:
+- POJO 请求链路:
 
 <!-- $$
 \text{前端} 
