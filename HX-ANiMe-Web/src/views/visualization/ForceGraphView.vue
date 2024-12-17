@@ -801,7 +801,6 @@ const handleEditChart = (id: number) => {
                 }, () => {
 
                 });
-                console.log("表单数据：", formData);
                 ElMessage.success("修改成功!");
             }
         },
@@ -1299,7 +1298,6 @@ onMounted(async () => {
                     fromNodeId: linkNode.source,
                     toNodeId: linkNode.target
                 }, (data: any) => {
-                    console.log(data);
                     linkNode.id = data;
 
                     webkitDep.links.push(linkNode);

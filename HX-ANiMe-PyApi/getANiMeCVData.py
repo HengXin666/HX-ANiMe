@@ -157,7 +157,7 @@ def main(ANiMeUrl: str, apiKey: str, idNums: list[int]) -> None:
 
 if __name__ == '__main__':
     # 用户图表 apiKey
-    apiKey = "JYVJGUydg1bgOSgF0lDXWFHI4Upp2NI7fbj4ji"
+    apiKey = "eriN7mqW9fTzSU3uYyomsInOSSMhNR2Oj1Cj31f7"
 
     # 后端服务器URL
     ANiMeUrl = "http://localhost:28205"
@@ -173,10 +173,17 @@ if __name__ == '__main__':
         84873,  # 漆黑的子弹
         262939, # 科方
         407573, # 转生史莱姆 3
+        289907, # 盾勇 3
         302128, # 约战 4
         419846, # 陰の実力者になりたくて！ 2nd season
         295017, # 棍勇
-        289907, # 盾勇 3
     ]
     """
-    main(ANiMeUrl, apiKey, [])
+    main(ANiMeUrl, apiKey, [
+        194261, # 天使的3P
+        219658, # 龙王的工作
+        84873,  # 漆黑的子弹
+        262939, # 科方
+        407573, # 转生史莱姆 3
+        289907, # 盾勇 3
+    ])
