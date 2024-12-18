@@ -274,7 +274,7 @@
                             </el-tooltip>
                             <el-form-item label="边长度范围">
                                 <el-slider v-model="settingsTmp.forceOrientedDiagram.force.edgeLength" range :min="10"
-                                    :max="500" :step="10" style="width: 300px;" />
+                                    :max="1000" :step="10" style="width: 300px;" />
                             </el-form-item>
                             <el-form-item label="排斥力">
                                 <el-slider v-model="settingsTmp.forceOrientedDiagram.force.repulsion" :min="0"
